@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Battery Rental Manager</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <style>
+        /* Ensures content doesn't hide behind fixed navbars */
+        body {
+            padding-top: 56px; /* Height of top navbar */
+            padding-bottom: 70px; /* Height of bottom navbar */
+            background-color: var(--bs-body-bg);
+        }
+
+        /* Page containers */
+        .page {
+            display: none; /* Hide all pages by default */
+        }
+        .page.active {
+            display: block; /* Show active page */
+        }
+
+        /* Bottom navigation bar */
+        .bottom-nav {
+            background-color: var(--bs-body-bg);
+            border-top: 1px solid var(--bs-border-color);
+        }
+        .bottom-nav .nav-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            padding: 0.5rem 0.25rem;
+        }
+        .bottom-nav .nav-link i {
+            font-size: 1.5rem;
+        }
+        .bottom-nav .nav-link.active {
+            color: var(--bs-primary);
+        }
+
+        /* Big touch-friendly buttons */
+        .btn-xxl {
+            padding: 1rem 1.5rem;
+            font-size: 1.25rem;
+            line-height: 1.5;
+            border-radius: 0.5rem;
+        }
+
+        /* Dashboard quick links */
+        .quick-links .btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            font-size: 0.9rem;
+            white-space: normal;
+        }
+        .quick-links .btn i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Status colors */
+        .status-available {
+            color: var(--bs-primary);
+            border-color: var(--bs-primary);
+        }
+        .status-given, .status-pending {
+            color: var(--bs-danger);
+            border-color: var(--bs-danger);
+        }
+        .status-returned {
+            color: var(--bs-success);
+            border-color: var(--bs-success);
+        }
+        .badge.status-available { background-color: var(--bs-primary); }
+        .badge.status-given, .badge.status-pending { background-color: var(--bs-danger); }
+        .badge.status-returned { background-color: var(--bs-success); }
+        
+        .batt-color-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+        .batt-color-default { background-color: #e0e0e0; }
+        .batt-color-green { background-color: #4caf50; }
+        .batt-color-pink { background-color: #e91e63; }
+        .batt-color-blue { background-color: #2196f3; }
+        .batt-color-red { background-color: #f44336; }
+        .batt-color-yellow { background-color: #ffeb3b; }
+        .batt-color-black { background-color: #212121; }
+
+        /* Fix for blue square on select focus */
+        .form-select:focus {
+            border-color: #ced4da;
+            box-shadow: none;
+            outline: 0;
+        }
+
+        /* Fix for blue square on buttons and links */
+        .btn:focus, a:focus, .nav-link:focus {
+            box-shadow: none !important;
+            outline: 0 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="#" onclick="App.navigateTo('dashboard')">
+                <i class="bi bi-battery-charging"></i> Battery Rental Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="darkModeToggle" onclick="App.toggleDarkMode()">
+                            <i class="bi bi-moon-fill"></i> <span>Toggle Theme</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="container-fluid mt-3">
+
+        <!-- ============================================== -->
+        <!-- == PAGE: DASHBOARD                          == -->
+        <!-- ============================================== -->
+        <div id="page-dashboard" class="page active">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4">Dashboard</h2>
+                <select class="form-select w-auto" id="dashboardMarketFilter" onchange="App.updateGlobalMarket(this.value)">
+                    <!-- Markets will be populated here -->
+                </select>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="card text-center text-bg-primary h-100">
+                        <div class="card-body">
+                            <h5 class="card-title" id="stat-total">0</h5>
+                            <p class="card-text"><small>Total Batteries</small></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card text-center text-bg-success h-100">
+                        <div class="card-body">
+                            <h5 class="card-title" id="stat-available">0</h5>
+                            <p class="card-text"><small>Available</small></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card text-center text-bg-danger h-100">
+                        <div class="card-body">
+                            <h5 class="card-title" id="stat-rented">0</h5>
+                            <p class="card-text"><small>Rented Out</small></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card text-center text-bg-warning h-100">
+                        <div class="card-body">
+                            <h5 class="card-title" id="stat-pending">0</h5>
+                            <p class="card-text"><small>Pending Returns</small></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <h3 class="h5 mt-4">Quick Actions</h3>
+            <div class="row g-3 quick-links">
+                <div class="col-6">
+                    <button class="btn btn-lg btn-outline-primary w-100" onclick="App.navigateTo('give-battery')">
+                        <i class="bi bi-box-arrow-up"></i>
+                        Give Battery (Manual)
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-lg btn-outline-success w-100" onclick="App.navigateTo('return-battery')">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                        Return Battery
+                    </button>
+                </div>
+                <div class="col-4">
+                    <button class="btn btn-outline-secondary w-100" onclick="App.navigateTo('customers')">
+                        <i class="bi bi-people"></i>
+                        Customers
+                    </button>
+                </div>
+                <div class="col-4">
+                    <button class="btn btn-outline-secondary w-100" onclick="App.navigateTo('batteries')">
+                        <i class="bi bi-battery-full"></i>
+                        Batteries
+                    </button>
+                </div>
+                <div class="col-4">
+                    <button class="btn btn-outline-secondary w-100" onclick="App.navigateTo('reports')">
+                        <i class="bi bi-clipboard-data"></i>
+                        Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- == PAGE: GIVE BATTERY (MANUAL)              == -->
+        <!-- ============================================== -->
+        <div id="page-give-battery" class="page">
+            <h2 class="h4 mb-3">Give Battery (Manual Entry)</h2>
+            <p>This page is for assigning *specific* battery numbers to a customer.</p>
+            
+            <form id="giveBatteryForm" onsubmit="App.Give.submit(); return false;">
+                <!-- Step 1: Select Market -->
+                <div class="mb-3">
+                    <label for="give-market" class="form-label">Step 1: Select Market</label>
+                    <select class="form-select form-select-lg" id="give-market" required onchange="App.Give.loadCustomersForMarket()">
+                        <option value="">-- Select a Market --</option>
+                    </select>
+                </div>
+
+                <!-- Step 2: Select Customer (CHANGED TO LIST) -->
+                <div class="mb-3">
+                    <label for="give-customer-search" class="form-label">Step 2: Select Customer</label>
+                    <input type="text" class="form-control form-control-lg mb-2" id="give-customer-search" placeholder="Search customer name..." onkeyup="App.Give.filterCustomers()">
+                    <div id="give-customer-list" class="list-group" style="max-height: 250px; overflow-y: auto;">
+                        <!-- Customer list will be populated here -->
+                    </div>
+                    <input type="hidden" id="give-customer-id" required> <!-- This is key -->
+                </div>
+
+                <!-- *** NEW SECTION: Step 3: Select Available Batteries *** -->
+                <div class="mb-3">
+                    <label for="give-available-battery-list" class="form-label">Step 3: Select Available Batteries (Tap to add)</label>
+                    <div id="give-available-battery-list" class="p-2 rounded" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--bs-border-color);">
+                        <small class="text-muted">Select a market to see available batteries.</small>
+                    </div>
+                </div>
+
+                <!-- Step 4: Selected Batteries -->
+                <div class="mb-3">
+                    <label for="give-battery-numbers" class="form-label">Step 4: Selected Batteries</label>
+                    <textarea class="form-control form-control-lg" id="give-battery-numbers" rows="3" placeholder="Batteries will appear here when selected..." required></textarea>
+                </div>
+
+                <!-- Step 5: Finish -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-xxl">
+                        <i class="bi bi-check-circle-fill"></i> Finish & Give
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- == PAGE: RETURN BATTERY                     == -->
+        <!-- ============================================== -->
+        <div id="page-return-battery" class="page">
+            <h2 class="h4 mb-3">Return Battery</h2>
+            <p>Showing customers with pending battery returns.</p>
+            <input type="text" class="form-control mb-3" id="return-customer-search" placeholder="Search customers..." onkeyup="App.Return.filterCustomers()">
+            <div id="return-pending-list" class="list-group">
+                <!-- Pending customers will be populated here -->
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- == PAGE: CUSTOMER MANAGEMENT                == -->
+        <!-- ============================================== -->
+        <div id="page-customers" class="page">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 mb-0">Customers</h2>
+                <button class="btn btn-primary" onclick="App.Customers.showModal()">
+                    <i class="bi bi-plus-circle"></i> Add New
+                </button>
+            </div>
+            
+            <div class="input-group mb-3">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="customer-search" placeholder="Search by name, phone, or address..." onkeyup="App.Customers.loadList()">
+            </div>
+            
+            <div class="input-group mb-3">
+                <label class="input-group-text" for="customer-market-filter">Market</label>
+                <select class="form-select" id="customer-market-filter" onchange="App.updateGlobalMarket(this.value)">
+                    <option value="All">All Markets</option>
+                </select>
+            </div>
+
+            <ul class="list-group" id="customer-list">
+                <!-- Customer list will be populated here -->
+            </ul>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- == PAGE: BATTERY MANAGEMENT                 == -->
+        <!-- ============================================== -->
+        <div id="page-batteries" class="page">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 mb-0">Batteries</h2>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-info" onclick="App.Batteries.showRangeModal()">
+                        <i class="bi bi-plus-slash-minus"></i> Range
+                    </button>
+                    <button class="btn btn-primary" onclick="App.Batteries.showAddModal()">
+                        <i class="bi bi-plus-circle"></i> New
+                    </button>
+                    <button class="btn btn-danger" onclick="App.Settings.clearBatteries()">
+                        <i class="bi bi-trash"></i> Clear All
+                    </button>
+                </div>
+            </div>
+            
+            <div class="input-group mb-3">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="battery-search" placeholder="Search by battery number..." onkeyup="App.Batteries.loadList()">
+            </div>
+
+            <div class="input-group mb-3">
+                <label class="input-group-text" for="battery-market-filter">Market</label>
+                <select class="form-select" id="battery-market-filter" onchange="App.updateGlobalMarket(this.value)">
+                    <option value="All">All Markets</option>
+                </select>
+            </div>
+
+            <div class="input-group mb-3">
+                <label class="input-group-text" for="battery-status-filter">Status</label>
+                <select class="form-select" id="battery-status-filter" onchange="App.Batteries.loadList()">
+                    <option value="All">All Statuses</option>
+                    <option value="Available">Available</option>
+                    <option value="Given">Given</option>
+                </select>
+            </div>
+
+            <ul class="list-group" id="battery-list">
+                <!-- Battery list will be populated here -->
+            </ul>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- == PAGE: REPORTS                            == -->
+        <!-- ============================================== -->
+        <div id="page-reports" class="page">
+            <h2 class="h4 mb-3">Reports</h2>
+            
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <label for="report-market" class="form-label">Market</label>
+                    <select class="form-select" id="report-market">
+                        <option value="All">All Markets</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="report-date-start" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="report-date-start">
+                </div>
+                <div class="col-md-4">
+                    <label for="report-date-end" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="report-date-end">
+                </div>
+            </div>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-3">
+                <button class="btn btn-primary" onclick="App.Reports.generate()">
+                    <i class="bi bi-funnel"></i> Generate Report
+                </button>
+                <button class="btn btn-success" onclick="App.Reports.export('csv')">
+                    <i class="bi bi-filetype-csv"></i> Export as CSV
+                </button>
+                <button class="btn btn-success" onclick="App.Reports.export('xlsx')">
+                    <i class="bi bi-filetype-xlsx"></i> Export as Excel
+                </button>
+            </div>
+
+            <div id="report-summary" class="mb-3">
+                <!-- Report summary totals go here -->
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Market</th>
+                            <th>Customer</th>
+                            <th>Battery #</th>
+                            <th>Status</th>
+                            <th>Date Returned</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-results">
+                        <!-- Report data goes here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- == PAGE: SETTINGS                           == -->
+        <!-- ============================================== -->
+        <div id="page-settings" class="page">
+            <h2 class="h4 mb-3">Settings</h2>
+
+            <!-- Market Management -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Markets</h5>
+                    <p class="card-text">Add or remove markets. (e.g., Sunday, Wednesday, Friday)</p>
+                    <div class="mb-2">
+                        <label for="settings-market-list" class="form-label">Markets (comma-separated)</label>
+                        <textarea class="form-control" id="settings-market-list" rows="3"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="App.Settings.saveMarkets()">Save Markets</button>
+                </div>
+            </div>
+            
+            <!-- Backup & Restore -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Backup & Restore</h5>
+                    <p class="card-text">Save all your data to a file or restore from a backup.</p>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button class="btn btn-success" onclick="App.Settings.backupData()">
+                            <i class="bi bi-download"></i> Backup All Data
+                        </button>
+                        <button class="btn btn-warning" onclick="document.getElementById('restore-file-input').click()">
+                            <i class="bi bi-upload"></i> Restore from Backup
+                        </button>
+                        <input type="file" id="restore-file-input" class="d-none" accept=".json" onchange="App.Settings.restoreData(event)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card text-bg-danger mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Danger Zone</h5>
+                    <p class="card-text">Perform irreversible actions.</p>
+                    <button class="btn btn-danger me-2" onclick="App.Settings.resetDailyData()">
+                        <i class="bi bi-calendar-x"></i> Reset Daily Transactions
+                    </button>
+                    <button class="btn btn-danger" onclick="App.Settings.clearBatteries()">
+                        <i class="bi bi-exclamation-triangle"></i> Clear All Batteries
+                    </button>
+                    <small class="d-block text-white-50 mt-1">Reset Daily: Clears transactions only. Clear All: Deletes all batteries and transactions.</small>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ============================================== -->
+    <!-- == BOTTOM NAVIGATION                          == -->
+    <!-- ============================================== -->
+    <nav class="navbar fixed-bottom navbar-light bottom-nav nav-pills nav-fill">
+        <a class="nav-link active" href="#" data-page="dashboard" onclick="App.navigateTo('dashboard')">
+            <i class="bi bi-house-door"></i>
+            <span>Dashboard</span>
+        </a>
+        <a class="nav-link" href="#" data-page="give-battery" onclick="App.navigateTo('give-battery')">
+            <i class="bi bi-box-arrow-up"></i>
+            <span>Give (Manual)</span> <!-- CHANGED Label -->
+        </a>
+        <a class="nav-link" href="#" data-page="return-battery" onclick="App.navigateTo('return-battery')">
+            <i class="bi bi-box-arrow-in-down"></i>
+            <span>Return</span>
+        </a>
+        <a class="nav-link" href="#" data-page="customers" onclick="App.navigateTo('customers')">
+            <i class="bi bi-people"></i>
+            <span>Customers</span>
+        </a>
+        <a class="nav-link" href="#" data-page="settings" onclick="App.navigateTo('settings')">
+            <i class="bi bi-gear"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <!-- ============================================== -->
+    <!-- == MODALS                                   == -->
+    <!-- ============================================== -->
+
+    <!-- Customer Add/Edit Modal -->
+    <div class="modal fade" id="customerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="customerForm" onsubmit="App.Customers.save(); return false;">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="customerModalTitle">Add Customer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="customer-id">
+                        <div class="mb-3">
+                            <label for="customer-market" class="form-label">Market</label>
+                            <select class="form-select" id="customer-market" required>
+                                <!-- Market options -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customer-name" class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="customer-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customer-mobile" class="form-label">Mobile Number</label>
+                            <input type="tel" class="form-control" id="customer-mobile" pattern="[0-9]{10}">
+                            <div class="invalid-feedback">If provided, please enter a 10-digit mobile number.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customer-address" class="form-label">Address / Area / Shop Name</label>
+                            <input type="text" class="form-control" id="customer-address">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Customer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Battery Add/Edit Modal -->
+    <div class="modal fade" id="batteryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="batteryForm" onsubmit="App.Batteries.save(); return false;">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="batteryModalTitle">Add Battery</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="battery-id">
+                        <div class="mb-3">
+                            <label for="battery-number" class="form-label">Battery Serial Number</label>
+                            <input type="text" class="form-control" id="battery-number" required>
+                            <div class="invalid-feedback" id="battery-number-error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="battery-market" class="form-label">Market</label>
+                            <select class="form-select" id="battery-market" required>
+                                <!-- Market options -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="battery-color" class="form-label">Battery Color</label>
+                            <select class="form-select" id="battery-color">
+                                <option value="default">Default (Grey)</option>
+                                <option value="green">Green</option>
+                                <option value="pink">Pink</option>
+                                <option value="blue">Blue</option>
+                                <option value="red">Red</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="black">Black</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Battery</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Battery Range Add Modal -->
+    <div class="modal fade" id="batteryRangeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="batteryRangeForm" onsubmit="App.Batteries.saveRange(); return false;">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Add Batteries from Range</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="battery-range-prefix" class="form-label">Prefix (Optional)</label>
+                            <input type="text" class="form-control" id="battery-range-prefix" placeholder="e.g., A-">
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="battery-range-start" class="form-label">Start Number</label>
+                                <input type="number" class="form-control" id="battery-range-start" required min="1" value="1">
+                            </div>
+                            <div class="col">
+                                <label for="battery-range-end" class="form-label">End Number</label>
+                                <input type="number" class="form-control" id="battery-range-end" required min="1" value="200">
+                            </div>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="battery-range-market" class="form-label">Market</label>
+                            <select class="form-select" id="battery-range-market" required>
+                                <!-- Market options -->
+                            </select>
+                        </div>
+                        <div class="mb-3 mt-3">
+                            <label for="battery-range-color" class="form-label">Battery Color</label>
+                            <select class="form-select" id="battery-range-color">
+                                <option value="default">Default (Grey)</option>
+                                <option value="green">Green</option>
+                                <option value="pink">Pink</option>
+                                <option value="blue">Blue</option>
+                                <option value="red">Red</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="black">Black</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add Batteries</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Battery Return Modal -->
+    <div class="modal fade" id="returnModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="returnModalTitle">Return Batteries</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tap a battery to mark it as "Returned".</p>
+                    <ul class="list-group" id="return-battery-list">
+                        <!-- Batteries to return -->
+                    </ul>
+                </div>
+                <div class="modal-footer justify-content-start" id="return-notify-footer" style="display: none;">
+                    <a href="#" id="return-whatsapp-link" target="_blank" class="btn btn-success">
+                        <i class="bi bi-whatsapp"></i> Notify Customer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- == NEW: QUICK GIVE MODAL                    == -->
+    <!-- ============================================== -->
+    <div class="modal fade" id="quickGiveModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form id="quickGiveForm" onsubmit="App.Customers.submitQuickGive(); return false;">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="quickGiveModalTitle">Quick Give</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="quick-give-customer-id">
+                        <input type="hidden" id="quick-give-customer-market">
+                        <p id="quick-give-customer-name-display" class="fw-bold"></p>
+                        
+                        <div class="mb-3">
+                            <label for="quick-give-battery-count" class="form-label">Number of batteries to give:</label>
+                            <input type="number" class="form-control form-control-lg" id="quick-give-battery-count" required min="1" value="1">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle-fill"></i> Confirm Give
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- == TOAST CONTAINER                          == -->
+    <!-- ============================================== -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+        <div id="appToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong class="me-auto" id="toastTitle">Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                Action completed successfully.
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- == JAVASCRIPT LIBRARIES                       == -->
+    <!-- ============================================== -->
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Dexie.js (IndexedDB Wrapper) -->
+    <script src="https://unpkg.com/dexie@4.0.7/dist/dexie.js"></script>
+    <!-- SheetJS (Excel Export) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <!-- ============================================== -->
+    <!-- == APPLICATION JAVASCRIPT                     == -->
+    <!-- ============================================== -->
+    <script>
+        // ----------------------------------------
+        // 1. DATABASE SETUP (DEXIE.JS)
+        // ----------------------------------------
+        const db = new Dexie('BatteryRentalManager');
+        db.version(4).stores({ // Upped version to add index for transactions
+            customers: '++id, name, mobile, address, market, isActive',
+            batteries: '++id, &batteryNumber, status, color, market, [market+status]', 
+            transactions: '++id, customerId, batteryNumber, market, dateGiven, dateReturned, status, [customerId+status], [market+status]', // <-- ADDED [market+status] INDEX
+            settings: 'key' // Simple key-value store (e.g., 'markets')
+        }).upgrade(tx => {
+            // Upgrade from version 3 to 4 is just adding an index,
+            // but we keep the v3 upgrade logic just in case someone is on v2
+            return tx.table('batteries').toCollection().modify(battery => {
+                if (battery.color === undefined) {
+                    battery.color = 'default';
+                }
+                if (battery.market === undefined) {
+                    battery.market = 'Unassigned'; // Assign old batteries to 'Unassigned'
+                }
+            });
+        });
+
+        // Populate initial settings
+        db.on('populate', async () => {
+            await db.settings.put({
+                key: 'markets',
+                value: ['Sunday', 'Wednesday', 'Friday', 'Unassigned'] // Added Unassigned
+            });
+        });
+
+        // ----------------------------------------
+        // 2. MAIN APP CONTROLLER
+        // ----------------------------------------
+        const App = {
+            
+            // App state
+            state: {
+                markets: ['Sunday', 'Wednesday', 'Friday', 'Unassigned'], // Added Unassigned
+                globalMarketFilter: 'All', // NEW: Global filter
+                currentPage: 'dashboard',
+                currentCustomerModal: null, // Bootstrap modal instance
+                currentBatteryModal: null, // Bootstrap modal instance
+                currentBatteryRangeModal: null, // Bootstrap modal instance
+                currentReturnModal: null, // Bootstrap modal instance
+                currentQuickGiveModal: null, // *** NEW ***
+                appToast: null // Bootstrap toast instance
+            },
+
+            // App Initialization
+            init: async () => {
+                document.addEventListener('DOMContentLoaded', () => {
+                    // Load global market filter *first*
+                    App.state.globalMarketFilter = localStorage.getItem('battery-manager-market') || 'All';
+
+                    // Initialize Bootstrap components
+                    App.state.currentCustomerModal = new bootstrap.Modal(document.getElementById('customerModal'));
+                    App.state.currentBatteryModal = new bootstrap.Modal(document.getElementById('batteryModal'));
+                    App.state.currentBatteryRangeModal = new bootstrap.Modal(document.getElementById('batteryRangeModal'));
+                    App.state.currentReturnModal = new bootstrap.Modal(document.getElementById('returnModal'));
+                    App.state.currentQuickGiveModal = new bootstrap.Modal(document.getElementById('quickGiveModal')); // *** NEW ***
+                    App.state.appToast = new bootstrap.Toast(document.getElementById('appToast'));
+
+                    // Load settings
+                    App.Settings.load();
+                    App.Dashboard.refresh();
+
+                    // Set initial page
+                    App.navigateTo('dashboard');
+                });
+            },
+
+            // Page Navigation
+            navigateTo: (pageId) => {
+                App.state.currentPage = pageId;
+                // Hide all pages
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                // Show target page
+                document.getElementById(`page-${pageId}`).classList.add('active');
+                
+                // Update bottom nav active state
+                document.querySelectorAll('.bottom-nav .nav-link').forEach(link => {
+                    link.classList.toggle('active', link.dataset.page === pageId);
+                });
+
+                // Run page-specific load logic
+                switch (pageId) {
+                    case 'dashboard': App.Dashboard.refresh(); break;
+                    case 'customers': App.Customers.loadList(); break;
+                    case 'batteries': App.Batteries.loadList(); break;
+                    case 'give-battery': App.Give.load(); break;
+                    case 'return-battery': App.Return.load(); break;
+                    case 'reports': App.Reports.load(); break;
+                    case 'settings': App.Settings.load(); break;
+                }
+            },
+
+            // UI Helpers
+            showToast: (title, message, type = 'success') => {
+                const toastInstance = App.state.appToast; // This is the BS Toast instance
+                const toastEl = document.getElementById('appToast'); // This is the HTML element
+                
+                if (!toastInstance || !toastEl) {
+                    console.error("Toast component not initialized.");
+                    return;
+                }
+
+                const toastHeader = toastEl.querySelector('.toast-header');
+                const toastTitle = toastEl.querySelector('#toastTitle');
+                const toastBody = toastEl.querySelector('#toastBody');
+                const toastIcon = toastHeader.querySelector('i'); // Get icon from header
+
+                if (!toastHeader || !toastTitle || !toastBody || !toastIcon) {
+                    console.error("Toast HTML structure is incorrect.");
+                    return;
+                }
+                
+                // Reset classes
+                toastHeader.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-warning');
+                toastIcon.className = ''; // Reset icon class
+
+                if (type === 'success') {
+                    toastHeader.classList.add('text-bg-success');
+                    toastIcon.className = 'bi bi-check-circle-fill me-2';
+                } else if (type === 'error') {
+                    toastHeader.classList.add('text-bg-danger');
+                    toastIcon.className = 'bi bi-exclamation-triangle-fill me-2';
+                } else { // info
+                    toastHeader.classList.add('text-bg-warning');
+                    toastIcon.className = 'bi bi-info-circle-fill me-2';
+                }
+
+                toastTitle.textContent = title;
+                toastBody.textContent = message;
+                toastInstance.show();
+            },
+
+            // NEW: Global Market Updater
+            updateGlobalMarket: (market) => {
+                App.state.globalMarketFilter = market;
+                localStorage.setItem('battery-manager-market', market);
+
+                // Update all other selects
+                const selects = document.querySelectorAll('select[id*="-market"], select[id*="MarketFilter"]');
+                selects.forEach(select => {
+                    if (Array.from(select.options).some(opt => opt.value === market)) {
+                        select.value = market;
+                    } else {
+                        // Fallback for selects that don't have this market
+                        if (select.id.includes('Filter') || select.id.includes('report')) {
+                            select.value = 'All'; // Filters default to 'All'
+                        } else {
+                            select.value = ''; // Required fields default to 'Select'
+                        }
+                    }
+                });
+
+                // Refresh the *current* page's content
+                switch (App.state.currentPage) {
+                    case 'dashboard': App.Dashboard.refresh(); break;
+                    case 'customers': App.Customers.loadList(); break;
+                    case 'batteries': App.Batteries.loadList(); break;
+                    case 'give-battery': App.Give.loadCustomersForMarket(); break;
+                }
+            },
+
+            populateMarketSelects: () => {
+                const selects = document.querySelectorAll('select[id*="-market"], select[id*="MarketFilter"]');
+                const globalMarket = App.state.globalMarketFilter;
+
+                selects.forEach(select => {
+                    let options = '';
+                    if (select.id.includes('Filter') || select.id.includes('report')) {
+                        options += '<option value="All">All Markets</option>';
+                    }
+                    if (select.id.includes('give') || select.id === 'battery-market' || select.id === 'battery-range-market') {
+                        options += '<option value="">-- Select a Market --</option>';
+                    }
+                    App.state.markets.forEach(market => {
+                        options += `<option value="${market}">${market}</option>`;
+                    });
+                    select.innerHTML = options;
+
+                    // Now set value based on global state
+                    if (Array.from(select.options).some(opt => opt.value === globalMarket)) {
+                        select.value = globalMarket;
+                    } else {
+                        // Global state is not a valid option, fall back
+                        if (select.id.includes('Filter') || select.id.includes('report')) {
+                            select.value = 'All';
+                        } else {
+                            select.value = ''; // Default to "select a market"
+                        }
+                    }
+                });
+            },
+
+            toggleDarkMode: () => {
+                const html = document.documentElement;
+                const currentTheme = html.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('battery-manager-theme', newTheme);
+            },
+
+            loadTheme: () => {
+                const savedTheme = localStorage.getItem('battery-manager-theme');
+                if (savedTheme) {
+                    document.documentElement.setAttribute('data-bs-theme', savedTheme);
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 3. DASHBOARD MODULE
+        // ----------------------------------------
+        App.Dashboard = {
+            refresh: async () => {
+                const market = document.getElementById('dashboardMarketFilter').value;
+                let marketFilter = market === 'All' ? {} : { market: market };
+
+                try {
+                    // *** FIX: Use .count() for 'All', .where(marketFilter).count() for specific market ***
+                    const total = (market === 'All')
+                        ? await db.batteries.count()
+                        : await db.batteries.where(marketFilter).count();
+                        
+                    const available = await db.batteries.where({ status: 'Available', ...marketFilter }).count();
+                    const rented = await db.batteries.where({ status: 'Given', ...marketFilter }).count();
+                    // This query will now work thanks to the new index in db.version(4)
+                    const pending = await db.transactions.where({ status: 'Pending', ...marketFilter }).count();
+
+                    document.getElementById('stat-total').textContent = total;
+                    document.getElementById('stat-available').textContent = available;
+                    document.getElementById('stat-rented').textContent = rented;
+                    document.getElementById('stat-pending').textContent = pending;
+                } catch (error) {
+                    console.error("Error refreshing dashboard:", error);
+                    App.showToast("Error", "Could not load dashboard stats.", "error");
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 4. CUSTOMER MODULE
+        // ----------------------------------------
+        App.Customers = {
+            showModal: (id = null) => {
+                const form = document.getElementById('customerForm');
+                form.reset();
+                form.classList.remove('was-validated');
+                document.getElementById('customer-id').value = '';
+                
+                if (id) {
+                    // Edit mode
+                    document.getElementById('customerModalTitle').textContent = 'Edit Customer';
+                    db.customers.get(id).then(customer => {
+                        document.getElementById('customer-id').value = customer.id;
+                        document.getElementById('customer-market').value = customer.market;
+                        document.getElementById('customer-name').value = customer.name;
+                        document.getElementById('customer-mobile').value = customer.mobile;
+                        document.getElementById('customer-address').value = customer.address;
+                    });
+                } else {
+                    // Add mode
+                    document.getElementById('customerModalTitle').textContent = 'Add Customer';
+                }
+                App.state.currentCustomerModal.show();
+            },
+
+            save: async () => {
+                const form = document.getElementById('customerForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const id = document.getElementById('customer-id').value;
+                const customerData = {
+                    market: document.getElementById('customer-market').value,
+                    name: document.getElementById('customer-name').value,
+                    mobile: document.getElementById('customer-mobile').value,
+                    address: document.getElementById('customer-address').value,
+                    isActive: 1
+                };
+
+                try {
+                    if (id) {
+                        // Update
+                        await db.customers.update(parseInt(id), customerData);
+                        App.showToast("Success", "Customer updated successfully.");
+                    } else {
+                        // Create
+                        await db.customers.add(customerData);
+                        App.showToast("Success", "Customer added successfully.");
+                    }
+                    App.state.currentCustomerModal.hide();
+                    App.Customers.loadList();
+                } catch (error) {
+                    console.error("Error saving customer:", error);
+                    App.showToast("Error", "Failed to save customer.", "error");
+                }
+            },
+
+            loadList: async () => {
+                const searchTerm = document.getElementById('customer-search').value.toLowerCase();
+                const marketFilter = document.getElementById('customer-market-filter').value;
+                
+                let query = db.customers.where('isActive').equals(1);
+                
+                if (marketFilter !== 'All') {
+                    query = query.and(customer => customer.market === marketFilter);
+                }
+
+                const customers = await query.toArray();
+
+                const filteredCustomers = customers.filter(c =>
+                    c.name.toLowerCase().includes(searchTerm) ||
+                    (c.mobile && c.mobile.includes(searchTerm)) || // Added check for mobile
+                    (c.address && c.address.toLowerCase().includes(searchTerm)) // Added check for address
+                );
+
+                const listEl = document.getElementById('customer-list');
+                listEl.innerHTML = '';
+                if (filteredCustomers.length === 0) {
+                    listEl.innerHTML = '<li class="list-group-item">No customers found.</li>';
+                    return;
+                }
+
+                filteredCustomers.sort((a, b) => a.name.localeCompare(b.name)).forEach(customer => {
+                    listEl.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${customer.name}</h6>
+                                <small class="text-muted">${customer.mobile || 'No Phone'} | ${customer.market}</small><br>
+                                <small class="text-muted">${customer.address || 'No Address'}</small>
+                            </div>
+                            <div class="btn-group">
+                                <!-- *** NEW: QUICK GIVE BUTTON *** -->
+                                <button class="btn btn-sm btn-outline-success" onclick="App.Customers.showQuickGiveModal(${customer.id}, '${customer.name}', '${customer.market}')">
+                                    <i class="bi bi-lightning-fill"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="App.Customers.showModal(${customer.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="App.Customers.delete(${customer.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                });
+            },
+
+            delete: async (id) => {
+                // if (confirm('Are you sure you want to delete this customer? Their records will be kept but marked inactive.')) { // REMOVED confirm()
+                    try {
+                        // We don't delete, we mark as inactive
+                        await db.customers.update(id, { isActive: 0 });
+                        App.showToast("Success", "Customer marked as inactive.");
+                        App.Customers.loadList();
+                    } catch (error) {
+                        App.showToast("Error", "Could not delete customer.", "error");
+                    }
+                // }
+            },
+
+            // *** NEW: Show Quick Give Modal ***
+            showQuickGiveModal: (id, name, market) => {
+                const form = document.getElementById('quickGiveForm');
+                form.reset();
+                form.classList.remove('was-validated');
+
+                document.getElementById('quick-give-customer-id').value = id;
+                document.getElementById('quick-give-customer-market').value = market;
+                document.getElementById('quickGiveModalTitle').textContent = `Quick Give to ${name}`;
+                document.getElementById('quick-give-customer-name-display').textContent = `Customer: ${name} (Market: ${market})`;
+                document.getElementById('quick-give-battery-count').value = 1; // Default to 1
+                
+                App.state.currentQuickGiveModal.show();
+            },
+
+            // *** NEW: Submit Quick Give Logic ***
+            submitQuickGive: async () => {
+                const form = document.getElementById('quickGiveForm');
+                 if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const customerId = parseInt(document.getElementById('quick-give-customer-id').value);
+                const market = document.getElementById('quick-give-customer-market').value;
+                const count = parseInt(document.getElementById('quick-give-battery-count').value);
+
+                if (!customerId || !market || !count || count <= 0) {
+                    App.showToast("Error", "Invalid data. Please try again.", "error");
+                    return;
+                }
+
+                try {
+                    // 1. Find available batteries in this market, limited to the count
+                    const availableBatteries = await db.batteries.where({ 
+                        market: market, 
+                        status: 'Available' 
+                    }).limit(count).toArray();
+
+                    // 2. Check if we found enough
+                    if (availableBatteries.length < count) {
+                        App.showToast("Error", `Only ${availableBatteries.length} batteries are available in ${market}.`, "error");
+                        return;
+                    }
+
+                    // 3. Process the transaction
+                    const dateGiven = new Date().toISOString();
+                    
+                    await db.transaction('rw', db.transactions, db.batteries, async () => {
+                        const transactionPromises = [];
+                        const batteryUpdatePromises = [];
+
+                        for (const battery of availableBatteries) {
+                            // 1. Create transaction record
+                            transactionPromises.push(db.transactions.add({
+                                customerId: customerId,
+                                batteryNumber: battery.batteryNumber,
+                                market: market,
+                                dateGiven: dateGiven,
+                                dateReturned: null,
+                                status: 'Pending'
+                            }));
+
+                            // 2. Update battery status
+                            batteryUpdatePromises.push(db.batteries.update(battery.id, { status: 'Given' }));
+                        }
+                        await Promise.all(transactionPromises);
+                        await Promise.all(batteryUpdatePromises);
+                    });
+
+                    App.state.currentQuickGiveModal.hide();
+                    App.showToast("Success", `${count} batteries given to customer.`);
+                    App.Dashboard.refresh();
+                    
+                    // Refresh related pages if they are active
+                    if (App.state.currentPage === 'return-battery') {
+                        App.Return.load();
+                    }
+                    if (App.state.currentPage === 'batteries') {
+                        App.Batteries.loadList();
+                    }
+
+                } catch (error) {
+                    console.error("Error during Quick Give:", error);
+                    App.showToast("Error", "Transaction failed. Please try again.", "error");
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 5. BATTERY MODULE
+        // ----------------------------------------
+        App.Batteries = {
+            showAddModal: () => {
+                const form = document.getElementById('batteryForm');
+                form.reset();
+                document.getElementById('battery-id').value = '';
+                document.getElementById('battery-number').disabled = false;
+                document.getElementById('batteryModalTitle').textContent = 'Add Battery';
+                document.getElementById('battery-number').classList.remove('is-invalid');
+                document.getElementById('battery-number-error').textContent = '';
+                App.state.currentBatteryModal.show();
+            },
+
+            save: async () => {
+                const form = document.getElementById('batteryForm');
+                const numberInput = document.getElementById('battery-number');
+                const numberError = document.getElementById('battery-number-error');
+                
+                if (!form.checkValidity()) return;
+
+                const batteryNumber = numberInput.value.trim();
+                const batteryColor = document.getElementById('battery-color').value;
+                const id = document.getElementById('battery-id').value;
+                const batteryMarket = document.getElementById('battery-market').value;
+
+                if (!batteryMarket) {
+                    App.showToast("Error", "Please select a market for the battery.", "error");
+                    return;
+                }
+
+                if (!id) { // Only check for duplicates on add
+                    try {
+                        const existing = await db.batteries.get({ batteryNumber: batteryNumber });
+                        if (existing) {
+                            numberInput.classList.add('is-invalid');
+                            numberError.textContent = 'This battery number already exists.';
+                            return;
+                        }
+                    } catch (e) {}
+                }
+
+                numberInput.classList.remove('is-invalid');
+                numberError.textContent = '';
+
+                try {
+                    if (id) {
+                        // This app doesn't support editing battery numbers, only adding/deleting.
+                        // We'll just close the modal.
+                    } else {
+                        // Add new battery
+                        await db.batteries.add({
+                            batteryNumber: batteryNumber,
+                            status: 'Available',
+                            color: batteryColor,
+                            market: batteryMarket
+                        });
+                        App.showToast("Success", `Battery ${batteryNumber} added.`);
+                    }
+                    App.state.currentBatteryModal.hide();
+                    App.Batteries.loadList();
+                    App.Dashboard.refresh();
+                } catch (error) {
+                    console.error("Error saving battery:", error);
+                    if (error.name === 'ConstraintError') {
+                        numberInput.classList.add('is-invalid');
+                        numberError.textContent = 'This battery number already exists.';
+                    } else {
+                        App.showToast("Error", "Could not save battery.", "error");
+                    }
+                }
+            },
+
+            showRangeModal: () => {
+                document.getElementById('batteryRangeForm').reset();
+                App.state.currentBatteryRangeModal.show();
+            },
+
+            saveRange: async () => {
+                const prefix = document.getElementById('battery-range-prefix').value.trim();
+                const start = parseInt(document.getElementById('battery-range-start').value);
+                const end = parseInt(document.getElementById('battery-range-end').value);
+                const color = document.getElementById('battery-range-color').value;
+                const market = document.getElementById('battery-range-market').value;
+
+                if (!market) {
+                    App.showToast("Error", "Please select a market.", "error");
+                    return;
+                }
+
+                if (!start || !end || start <= 0 || end <= 0) {
+                    App.showToast("Error", "Start and End numbers must be greater than 0.", "error");
+                    return;
+                }
+
+                if (end < start) {
+                    App.showToast("Error", "End number must be greater than or equal to Start number.", "error");
+                    return;
+                }
+
+                const totalToAdd = (end - start + 1);
+                if (totalToAdd > 500) {
+                    App.showToast("Error", "Cannot add more than 500 batteries at a time.", "error");
+                    return;
+                }
+
+                App.showToast("Info", `Adding ${totalToAdd} batteries. Please wait...`, "info");
+                App.state.currentBatteryRangeModal.hide();
+
+                const batteriesToAdd = [];
+                for (let i = start; i <= end; i++) {
+                    batteriesToAdd.push({
+                        batteryNumber: `${prefix}${i}`,
+                        status: 'Available',
+                        color: color,
+                        market: market
+                    });
+                }
+
+                try {
+                    // allKeys: false allows bulkAdd to skip duplicates and continue
+                    await db.batteries.bulkAdd(batteriesToAdd, { allKeys: false });
+                    // Re-query to see how many were actually added (handles duplicates)
+                    const existing = await db.batteries.where('batteryNumber').anyOf(batteriesToAdd.map(b => b.batteryNumber)).count();
+                    const addedCount = batteriesToAdd.length - (existing - totalToAdd); // This logic is tricky
+                    
+                    App.showToast("Success", `Finished processing ${totalToAdd} batteries. Check list for results.`);
+
+                } catch (e) {
+                    if (e.name === 'BulkError') {
+                        const failedCount = e.failures.length;
+                        const successCount = totalToAdd - failedCount;
+                        App.showToast("Warning", `Added ${successCount} batteries. ${failedCount} failed (likely duplicates).`, "info");
+                    } else {
+                        App.showToast("Error", "An error occurred during bulk add.", "error");
+                        console.error(e);
+                    }
+                }
+
+                App.Batteries.loadList();
+                App.Dashboard.refresh();
+            },
+
+            // *** FIXED FUNCTION ***
+            loadList: async () => {
+                const searchTerm = document.getElementById('battery-search').value.toLowerCase();
+                const statusFilter = document.getElementById('battery-status-filter').value;
+                const marketFilter = document.getElementById('battery-market-filter').value;
+                
+                let query = db.batteries; // Start with the Table object
+
+                // Build a filter object
+                const filter = {};
+                if (statusFilter !== 'All') {
+                    filter.status = statusFilter;
+                }
+                if (marketFilter !== 'All') {
+                    filter.market = marketFilter;
+                }
+
+                let collection;
+                // If filter has keys, use .where()
+                if (Object.keys(filter).length > 0) {
+                    collection = query.where(filter);
+                } else {
+                    // Otherwise, get the whole collection
+                    collection = query.toCollection();
+                }
+
+                const batteries = await collection.toArray(); // This should work
+
+                const filteredBatteries = batteries.filter(b =>
+                    b.batteryNumber.toLowerCase().includes(searchTerm)
+                );
+
+                const listEl = document.getElementById('battery-list');
+                listEl.innerHTML = '';
+                if (filteredBatteries.length === 0) {
+                    listEl.innerHTML = '<li class="list-group-item">No batteries found.</li>';
+                    return;
+                }
+
+                filteredBatteries.sort((a, b) => a.batteryNumber.localeCompare(b.batteryNumber, undefined, { numeric: true })).forEach(battery => {
+                    const statusClass = battery.status === 'Available' ? 'status-available' : 'status-given';
+                    const statusText = battery.status;
+                    const colorClass = battery.color || 'default';
+                    listEl.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="batt-color-dot batt-color-${colorClass}"></span>
+                                <h6 class="mb-0 d-inline-block">${battery.batteryNumber}</h6>
+                                <small class="text-muted d-block">${battery.market || 'Unassigned'}</small>
+                            </div>
+                            <div>
+                                <span class="badge rounded-pill me-3 status-${statusClass.replace('status-', '')}">${statusText}</span>
+                                <button class="btn btn-sm btn-outline-danger" onclick="App.Batteries.delete(${battery.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                });
+            },
+
+            delete: async (id) => {
+                // if (confirm('Are you sure you want to delete this battery? This cannot be undone.')) { // REMOVED confirm()
+                    try {
+                        // Check if battery is 'Given'
+                        const battery = await db.batteries.get(id);
+                        if (battery && battery.status === 'Given') {
+                            App.showToast("Error", "Cannot delete a battery that is currently 'Given'.", "error");
+                            return;
+                        }
+                        
+                        await db.batteries.delete(id);
+                        App.showToast("Success", "Battery deleted.");
+                        App.Batteries.loadList();
+                        App.Dashboard.refresh();
+                    } catch (error) {
+                        App.showToast("Error", "Could not delete battery.", "error");
+                    }
+                // }
+            }
+        };
+
+        // ----------------------------------------
+        // 6. GIVE BATTERY MODULE (MANUAL)
+        // ----------------------------------------
+        App.Give = {
+            load: () => {
+                document.getElementById('giveBatteryForm').reset();
+                document.getElementById('give-customer-list').innerHTML = '';
+                document.getElementById('give-customer-id').value = '';
+                document.getElementById('give-available-battery-list').innerHTML = '<small class="text-muted">Select a market to see available batteries.</small>'; // *** ADDED ***
+                App.populateMarketSelects();
+                // Set market dropdown to global filter or default
+                const globalMarket = App.state.globalMarketFilter;
+                document.getElementById('give-market').value = (globalMarket !== 'All') ? globalMarket : ''; 
+                document.getElementById('give-customer-search').disabled = (globalMarket === 'All');
+                
+                // If market is pre-selected, load customers
+                if(globalMarket !== 'All') {
+                    App.Give.loadCustomersForMarket();
+                } else {
+                     document.getElementById('give-customer-list').innerHTML = '<li class="list-group-item">Select a market to see customers.</li>';
+                }
+            },
+
+            loadCustomersForMarket: async () => {
+                const market = document.getElementById('give-market').value;
+                const customerListEl = document.getElementById('give-customer-list');
+                const customerSearchEl = document.getElementById('give-customer-search');
+                const availableBatteryListEl = document.getElementById('give-available-battery-list'); // *** ADDED ***
+                
+                // Reset customer selection
+                customerListEl.innerHTML = '<li class="list-group-item">Loading...</li>';
+                customerSearchEl.value = '';
+                document.getElementById('give-customer-id').value = '';
+                // Reset available batteries
+                availableBatteryListEl.innerHTML = '<small class="text-muted">Loading...</small>'; // *** ADDED ***
+
+                if (!market) {
+                    customerListEl.innerHTML = '<li class="list-group-item">Select a market to see customers.</li>';
+                    availableBatteryListEl.innerHTML = '<small class="text-muted">Select a market to see available batteries.</small>'; // *** ADDED ***
+                    customerSearchEl.disabled = true;
+                    return;
+                }
+
+                customerSearchEl.disabled = false;
+
+                // --- Load Customers (existing logic) ---
+                const customers = await db.customers.where({ market: market, isActive: 1 }).toArray();
+                const pendingTransactions = await db.transactions.where({ status: 'Pending' }).toArray();
+                const pendingCustomerIds = new Set(pendingTransactions.map(t => t.customerId));
+
+                if(customers.length === 0) {
+                    customerListEl.innerHTML = '<li class="list-group-item">No customers in this market.</li>';
+                } else {
+                    const customerItems = customers
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map(c => {
+                            const hasPending = pendingCustomerIds.has(c.id);
+                            const listClass = hasPending ? 'list-group-item-danger' : 'list-group-item-success'; // Red for pending, Green for clear
+                            return `
+                                <a href="#" class="list-group-item list-group-item-action ${listClass}" data-id="${c.id}" onclick="App.Give.selectCustomer(this)">
+                                    <h6 class="mb-0">${c.name}</h6>
+                                    <small>${c.mobile || 'No Phone'} | ${c.address || 'No Address'}</small>
+                                </a>
+                            `;
+                        })
+                        .join('');
+                    
+                    customerListEl.innerHTML = customerItems;
+                }
+
+                // --- *** NEW: Load Available Batteries *** ---
+                try {
+                    const availableBatteries = await db.batteries.where({ market: market, status: 'Available' }).toArray();
+                    if (availableBatteries.length === 0) {
+                        availableBatteryListEl.innerHTML = '<small class="text-muted">No available batteries in this market.</small>';
+                    } else {
+                        availableBatteries.sort((a, b) => a.batteryNumber.localeCompare(b.batteryNumber, undefined, { numeric: true }));
+                        availableBatteryListEl.innerHTML = availableBatteries.map(battery => {
+                            const colorClass = battery.color || 'default';
+                            return `<button type="button" class="btn btn-sm btn-outline-success m-1" onclick="App.Give.selectAvailableBattery(this, '${battery.batteryNumber}')">
+                                        <span class="batt-color-dot batt-color-${colorClass}" style="width: 8px; height: 8px; margin-right: 4px; vertical-align: middle;"></span>
+                                        ${battery.batteryNumber}
+                                    </button>`;
+                        }).join('');
+                    }
+                } catch (error) {
+                    console.error("Error loading available batteries:", error);
+                    availableBatteryListEl.innerHTML = '<small class="text-danger">Error loading batteries.</small>';
+                }
+            },
+
+            // *** NEW FUNCTION ***
+            selectAvailableBattery: (buttonElement, batteryNumber) => {
+                const textarea = document.getElementById('give-battery-numbers');
+                
+                // Add to textarea (avoiding duplicates)
+                const currentBatteries = textarea.value.split('\n').filter(s => s.trim());
+                if (!currentBatteries.includes(batteryNumber)) {
+                    textarea.value += batteryNumber + '\n';
+                    // Scroll to bottom
+                    textarea.scrollTop = textarea.scrollHeight;
+                }
+
+                // Disable button
+                buttonElement.disabled = true;
+                buttonElement.classList.remove('btn-outline-success');
+                buttonElement.classList.add('btn-success');
+            },
+
+            filterCustomers: () => {
+                const filter = document.getElementById('give-customer-search').value.toLowerCase();
+                const list = document.getElementById('give-customer-list');
+                const items = list.getElementsByTagName('a');
+                for (let i = 0; i < items.length; i++) {
+                    const txtValue = items[i].textContent || items[i].innerText;
+                    items[i].style.display = txtValue.toLowerCase().includes(filter) ? "" : "none";
+                }
+            },
+
+            selectCustomer: (el) => {
+                const id = el.dataset.id;
+                document.getElementById('give-customer-id').value = id;
+                
+                // Remove 'active' from all siblings
+                const list = document.getElementById('give-customer-list');
+                const items = list.getElementsByTagName('a');
+                for (let i = 0; i < items.length; i++) {
+                    items[i].classList.remove('active');
+                }
+                
+                // Add 'active' to the clicked one
+                el.classList.add('active');
+            },
+
+            submit: async () => {
+                const form = document.getElementById('giveBatteryForm');
+                if (!form.checkValidity()) {
+                    App.showToast("Error", "Please fill out all required fields.", "error");
+                    return;
+                }
+
+                const market = document.getElementById('give-market').value;
+                const customerId = parseInt(document.getElementById('give-customer-id').value);
+                const batteryNumbersRaw = document.getElementById('give-battery-numbers').value;
+                const batteryNumbers = batteryNumbersRaw.split('\n').map(s => s.trim()).filter(s => s);
+
+                if (batteryNumbers.length === 0) {
+                    App.showToast("Error", "Please enter at least one battery number.", "error");
+                    return;
+                }
+                
+                if (!customerId) {
+                    App.showToast("Error", "Please select a customer.", "error");
+                    return;
+                }
+
+                try {
+                    // Check all batteries
+                    const batteries = await db.batteries.where('batteryNumber').anyOf(batteryNumbers).toArray();
+                    
+                    const errors = [];
+                    const notFound = [];
+                    const validBatteries = [];
+                    const wrongMarket = [];
+
+                    const batteryMap = new Map(batteries.map(b => [b.batteryNumber, b]));
+
+                    for (const num of batteryNumbers) {
+                        const battery = batteryMap.get(num);
+                        if (!battery) {
+                            notFound.push(num);
+                        } else if (battery.status !== 'Available') {
+                            errors.push(`${num} is already ${battery.status}.`);
+                        } else if (battery.market !== market) {
+                            // NEW CHECK: Battery must belong to the selected market
+                            wrongMarket.push(`${num} (belongs to ${battery.market})`);
+                        } else {
+                            validBatteries.push(battery);
+                        }
+                    }
+
+                    if (notFound.length > 0) {
+                        App.showToast("Error", `Batteries not found: ${notFound.join(', ')}`, "error");
+                        return;
+                    }
+                    if (wrongMarket.length > 0) {
+                        App.showToast("Error", `Batteries from wrong market: ${wrongMarket.join(', ')}`, "error");
+                        return;
+                    }
+                    if (errors.length > 0) {
+                        App.showToast("Error", errors.join(' '), "error");
+                        return;
+                    }
+
+                    // All good, process the transaction
+                    const dateGiven = new Date().toISOString();
+                    
+                    await db.transaction('rw', db.transactions, db.batteries, async () => {
+                        const transactionPromises = [];
+                        const batteryUpdatePromises = [];
+
+                        for (const battery of validBatteries) {
+                            // 1. Create transaction record
+                            transactionPromises.push(db.transactions.add({
+                                customerId: customerId,
+                                batteryNumber: battery.batteryNumber,
+                                market: market,
+                                dateGiven: dateGiven,
+                                dateReturned: null,
+                                status: 'Pending'
+                            }));
+
+                            // 2. Update battery status
+                            batteryUpdatePromises.push(db.batteries.update(battery.id, { status: 'Given' }));
+                        }
+                        await Promise.all(transactionPromises);
+                        await Promise.all(batteryUpdatePromises);
+                    });
+
+                    App.showToast("Success", `${validBatteries.length} batteries given to customer.`);
+                    form.reset();
+                    document.getElementById('give-available-battery-list').innerHTML = ''; // *** ADDED ***
+                    App.navigateTo('dashboard'); // Go to dashboard to see update
+                
+                } catch (error) {
+                    console.error("Error giving battery:", error);
+                    App.showToast("Error", "An error occurred. Transaction rolled back.", "error");
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 7. RETURN BATTERY MODULE
+        // ----------------------------------------
+        App.Return = {
+            state: {
+                currentCustomer: null
+            },
+            
+            load: async () => {
+                document.getElementById('return-customer-search').value = '';
+                const listEl = document.getElementById('return-pending-list');
+                try {
+                    // Find all unique customer IDs from pending transactions
+                    const pendingTransactions = await db.transactions.where({ status: 'Pending' }).toArray();
+                    const customerIds = [...new Set(pendingTransactions.map(t => t.customerId))];
+                    
+                    if (customerIds.length === 0) {
+                        listEl.innerHTML = '<div class="alert alert-success">No customers with pending returns.</div>';
+                        return;
+                    }
+
+                    // Get customer details
+                    const customers = await db.customers.where('id').anyOf(customerIds).toArray();
+                    const customerMap = new Map(customers.map(c => [c.id, c]));
+
+                    // Group by customer
+                    const grouped = pendingTransactions.reduce((acc, t) => {
+                        acc[t.customerId] = (acc[t.customerId] || 0) + 1;
+                        return acc;
+                    }, {});
+
+                    let html = '';
+                    for (const id of customerIds) {
+                        const customer = customerMap.get(id);
+                        if (customer && customer.isActive) { // Only show active customers
+                            const count = grouped[id];
+                            html += `
+                                <a href="#" class="list-group-item list-group-item-action" data-customer-id="${id}" data-customer-name="${customer.name}" data-customer-phone="${customer.mobile}" onclick="App.Return.showReturnModal(this.dataset)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">${customer.name}</h5>
+                                        <span class="badge bg-danger rounded-pill">${count}</span>
+                                    </div>
+                                    <p class="mb-1">${customer.address || 'No Address'}</p>
+                                    <small>${customer.mobile || 'No Phone'} | ${customer.market}</small>
+                                </a>
+                            `;
+                        }
+                    }
+                    listEl.innerHTML = html || '<div class="alert alert-success">No active customers with pending returns.</div>';
+
+                } catch (error) {
+                    console.error("Error loading pending returns:", error);
+                    App.showToast("Error", "Could not load pending returns.", "error");
+                }
+            },
+
+            filterCustomers: () => {
+                const filter = document.getElementById('return-customer-search').value.toLowerCase();
+                const list = document.getElementById('return-pending-list');
+                const items = list.getElementsByTagName('a');
+                for (let i = 0; i < items.length; i++) {
+                    const txtValue = items[i].textContent || items[i].innerText;
+                    items[i].style.display = txtValue.toLowerCase().includes(filter) ? "" : "none";
+                }
+            },
+
+            showReturnModal: async (customerData) => {
+                App.Return.state.currentCustomer = customerData;
+                const customerId = parseInt(customerData.customerId);
+                document.getElementById('returnModalTitle').textContent = `Return for ${customerData.customerName}`;
+                document.getElementById('return-notify-footer').style.display = 'none';
+
+                const listEl = document.getElementById('return-battery-list');
+                listEl.innerHTML = '<li class="list-group-item">Loading...</li>';
+                App.state.currentReturnModal.show();
+
+                const transactions = await db.transactions
+                    .where({ customerId: customerId, status: 'Pending' })
+                    .toArray();
+                
+                if (transactions.length === 0) {
+                    listEl.innerHTML = '<li class="list-group-item text-success">All batteries returned!</li>';
+                    App.state.currentReturnModal.hide();
+                    App.Return.load(); // Refresh the main list
+                    return;
+                }
+
+                listEl.innerHTML = transactions.map(t => `
+                    <li class="list-group-item list-group-item-action list-group-item-danger" id="return-tx-${t.id}" onclick="App.Return.markAsReturned(${t.id}, '${t.batteryNumber}')">
+                        <i class="bi bi-battery me-2"></i>
+                        <strong>${t.batteryNumber}</strong>
+                        <small class="text-muted d-block">Given: ${new Date(t.dateGiven).toLocaleString()}</small>
+                    </li>
+                `).join('');
+            },
+
+            markAsReturned: async (transactionId, batteryNumber) => {
+                // if (!confirm(`Mark battery ${batteryNumber} as returned?`)) return; // REMOVED confirm()
+
+                try {
+                    const dateReturned = new Date().toISOString();
+
+                    await db.transaction('rw', db.transactions, db.batteries, async () => {
+                        // 1. Update transaction
+                        await db.transactions.update(transactionId, {
+                            status: 'Returned',
+                            dateReturned: dateReturned
+                        });
+
+                        // 2. Update battery
+                        await db.batteries.where({ batteryNumber: batteryNumber }).modify({
+                            status: 'Available'
+                        });
+                    });
+
+                    App.showToast("Success", `Battery ${batteryNumber} marked as returned.`);
+                    
+                    // Show notification footer
+                    const customer = App.Return.state.currentCustomer;
+                    if (customer.customerPhone) { // Only show if phone exists
+                        const waLink = document.getElementById('return-whatsapp-link');
+                        const message = encodeURIComponent(`Thank you for returning your battery (${batteryNumber}).`);
+                        waLink.href = `https://wa.me/91${customer.customerPhone}?text=${message}`; // Assumes 91 country code
+                        document.getElementById('return-notify-footer').style.display = 'block';
+                    }
+
+                    // Remove item from modal list
+                    const itemEl = document.getElementById(`return-tx-${transactionId}`);
+                    if (itemEl) itemEl.remove();
+
+                    // Check if list is empty
+                    const listEl = document.getElementById('return-battery-list');
+                    if (listEl.children.length === 0) {
+                        App.state.currentReturnModal.hide();
+                        App.Return.load(); // Refresh main list
+                        App.Dashboard.refresh();
+                    }
+
+                } catch (error) {
+                    console.error("Error marking as returned:", error);
+                    App.showToast("Error", "Could not mark battery as returned.", "error");
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 8. REPORTS MODULE
+        // ----------------------------------------
+        App.Reports = {
+            state: {
+                reportData: []
+            },
+            
+            load: () => {
+                document.getElementById('report-date-start').valueAsDate = new Date(new Date().setDate(new Date().getDate() - 7)); // Default 7 days ago
+                document.getElementById('report-date-end').valueAsDate = new Date();
+                document.getElementById('report-results').innerHTML = '<tr><td colspan="6">Generate a report to see results.</td></tr>';
+                document.getElementById('report-summary').innerHTML = '';
+            },
+
+            generate: async () => {
+                const market = document.getElementById('report-market').value;
+                const startDate = new Date(document.getElementById('report-date-start').value);
+                const endDate = new Date(document.getElementById('report-date-end').value);
+
+                // Set time to start of day and end of day
+                startDate.setHours(0, 0, 0, 0);
+                endDate.setHours(23, 59, 59, 999);
+                
+                let query = db.transactions
+                    .where('dateGiven').between(startDate.toISOString(), endDate.toISOString());
+                    
+                if (market !== 'All') {
+                    query = query.and(t => t.market === market);
+                }
+
+                const transactions = await query.toArray();
+                
+                if (transactions.length === 0) {
+                    document.getElementById('report-results').innerHTML = '<tr><td colspan="6">No data found for this period.</td></tr>';
+                    document.getElementById('report-summary').innerHTML = '';
+                    App.Reports.state.reportData = [];
+                    return;
+                }
+
+                // Get all customer IDs from report
+                const customerIds = [...new Set(transactions.map(t => t.customerId))];
+                const customers = await db.customers.where('id').anyOf(customerIds).toArray();
+                const customerMap = new Map(customers.map(c => [c.id, c.name]));
+
+                // For export
+                const exportData = [];
+
+                let given = 0;
+                let returned = 0;
+                let pending = 0;
+
+                const tableHtml = transactions.map(t => {
+                    const customerName = customerMap.get(t.customerId) || 'Unknown';
+                    const dateGiven = new Date(t.dateGiven).toLocaleString();
+                    const dateReturned = t.dateReturned ? new Date(t.dateReturned).toLocaleString() : 'N/A';
+                    
+                    if (t.status === 'Pending') pending++;
+                    if (t.status === 'Returned') returned++;
+                    given++; // Total transactions in period
+
+                    exportData.push({
+                        "Date Given": dateGiven,
+                        "Market": t.market,
+                        "Customer": customerName,
+                        "Battery #": t.batteryNumber,
+                        "Status": t.status,
+                        "Date Returned": dateReturned
+                    });
+
+                    return `
+                        <tr>
+                            <td>${dateGiven}</td>
+                            <td>${t.market}</td>
+                            <td>${customerName}</td>
+                            <td>${t.batteryNumber}</td>
+                            <td><span class="badge status-${t.status.toLowerCase()}">${t.status}</span></td>
+                            <td>${dateReturned}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                App.Reports.state.reportData = exportData;
+                document.getElementById('report-results').innerHTML = tableHtml;
+
+                // Update summary
+                document.getElementById('report-summary').innerHTML = `
+                    <span class="badge fs-6 text-bg-primary me-2">Total Given: ${given}</span>
+                    <span class="badge fs-6 text-bg-success me-2">Total Returned: ${returned}</span>
+                    <span class="badge fs-6 text-bg-danger">Total Pending: ${pending}</span>
+                `;
+            },
+
+            export: (type) => {
+                const data = App.Reports.state.reportData;
+                if (data.length === 0) {
+                    App.showToast("Info", "No data to export. Please generate a report first.", "info");
+                    return;
+                }
+
+                const filename = `Battery_Report_${new Date().toISOString().split('T')[0]}`;
+                const ws = XLSX.utils.json_to_sheet(data);
+
+                if (type === 'csv') {
+                    const csv = XLSX.utils.sheet_to_csv(ws);
+                    App.Settings.downloadFile(csv, `${filename}.csv`, 'text/csv');
+                } else { // xlsx
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Report");
+                    XLSX.writeFile(wb, `${filename}.xlsx`);
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 9. SETTINGS MODULE
+        // ----------------------------------------
+        App.Settings = {
+            load: async () => {
+                try {
+                    const marketsSetting = await db.settings.get('markets');
+                    if (marketsSetting) {
+                        App.state.markets = marketsSetting.value;
+                        document.getElementById('settings-market-list').value = marketsSetting.value.join(', ');
+                    }
+                    App.populateMarketSelects();
+                    App.loadTheme();
+                } catch (error) {
+                    console.error("Error loading settings:", error);
+                }
+            },
+
+            saveMarkets: async () => {
+                const marketString = document.getElementById('settings-market-list').value;
+                const markets = marketString.split(',').map(m => m.trim()).filter(m => m);
+                
+                try {
+                    await db.settings.put({ key: 'markets', value: markets });
+                    App.state.markets = markets;
+                    App.populateMarketSelects();
+                    App.showToast("Success", "Market list updated.");
+                } catch (error) {
+                    App.showToast("Error", "Could not save markets.", "error");
+                }
+            },
+
+            backupData: async () => {
+                try {
+                    const backup = {
+                        customers: await db.customers.toArray(),
+                        batteries: await db.batteries.toArray(),
+                        transactions: await db.transactions.toArray(),
+                        settings: await db.settings.toArray(),
+                    };
+                    const json = JSON.stringify(backup, null, 2);
+                    const filename = `battery-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+                    App.Settings.downloadFile(json, filename, 'application/json');
+                } catch (error) {
+                    console.error("Backup failed:", error);
+                    App.showToast("Error", "Backup failed.", "error");
+                }
+            },
+
+            downloadFile: (content, fileName, contentType) => {
+                const a = document.createElement("a");
+                const file = new Blob([content], { type: contentType });
+                a.href = URL.createObjectURL(file);
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(a.href);
+            },
+
+            restoreData: async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // if (!confirm("WARNING: This will delete all current data and replace it with the backup. Are you sure?")) { // REMOVED confirm()
+                //     event.target.value = null; // Reset file input
+                //     return;
+                // }
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const json = e.target.result;
+                        const data = JSON.parse(json);
+
+                        if (!data.customers || !data.batteries || !data.transactions || !data.settings) {
+                            throw new Error("Invalid backup file structure.");
+                        }
+
+                        // Perform restore in a transaction
+                        await db.transaction('rw', db.customers, db.batteries, db.transactions, db.settings, async () => {
+                            // Clear all data
+                            await Promise.all([
+                                db.customers.clear(),
+                                db.batteries.clear(),
+                                db.transactions.clear(),
+                                db.settings.clear()
+                            ]);
+
+                            // Bulk add new data
+                            await Promise.all([
+                                db.customers.bulkAdd(data.customers),
+                                db.batteries.bulkAdd(data.batteries),
+                                db.transactions.bulkAdd(data.transactions),
+                                db.settings.bulkAdd(data.settings)
+                            ]);
+                        });
+
+                        App.showToast("Success", "Data restored successfully. App will now reload.");
+                        // Reload settings and refresh UI
+                        await App.Settings.load();
+                        App.Dashboard.refresh();
+                        App.navigateTo('dashboard');
+                        setTimeout(() => window.location.reload(), 1500); // Reload to ensure clean state
+                    
+                    } catch (error) {
+                        console.error("Restore failed:", error);
+                        App.showToast("Error", `Restore failed: ${error.message}`, "error");
+                    } finally {
+                        event.target.value = null; // Reset file input
+                    }
+                };
+                reader.readAsText(file);
+            },
+
+            resetDailyData: async () => {
+                // if (!confirm("Are you sure? This will clear all transactions and mark all batteries as 'Available'. This cannot be undone.")) { // REMOVED confirm()
+                //     return;
+                // }
+                try {
+                    await db.transaction('rw', db.transactions, db.batteries, async () => {
+                        // 1. Clear all transactions
+                        await db.transactions.clear();
+                        
+                        // 2. Mark all batteries as 'Available'
+                        await db.batteries.toCollection().modify({ status: 'Available' });
+                    });
+                    App.showToast("Success", "Daily data has been reset.");
+                    App.Dashboard.refresh();
+                    App.navigateTo('dashboard');
+                } catch (error) { // <-- SYNTAX ERROR FIX
+                    console.error("Reset failed:", error);
+                    App.showToast("Error", "Could not reset data.", "error");
+                }
+            },
+
+            clearBatteries: async () => {
+                // const verification = prompt("This will delete ALL batteries and transactions. This cannot be undone. Type DELETE to confirm.");
+                // if (verification !== "DELETE") { // REMOVED prompt()
+                //     App.showToast("Info", "Action cancelled.", "info");
+                //     return;
+                // }
+
+                try {
+                    await db.transaction('rw', db.transactions, db.batteries, async () => {
+                        await db.transactions.clear();
+                        await db.batteries.clear();
+                    });
+                    App.showToast("Success", "All batteries and transactions have been deleted.");
+                    App.Dashboard.refresh();
+                    App.Batteries.loadList();
+                } catch (error) {
+                    console.error("Clear batteries failed:", error);
+                    App.showToast("Error", "Could not clear batteries.", "error");
+                }
+            }
+        };
+
+        // ----------------------------------------
+        // 10. APP INITIALIZATION
+        // ----------------------------------------
+        App.init();
+
+    </script>
+</body>
+</html>
