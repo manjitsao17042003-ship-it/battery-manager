@@ -12,22 +12,28 @@
 
     <!-- Custom CSS -->
     <style>
-        /* Ensures content doesn't hide behind fixed navbars */
+        /* ... existing styles ... */
         body {
-            padding-top: 56px; /* Height of top navbar */
-            padding-bottom: 70px; /* Height of bottom navbar */
+            padding-top: 56px; 
+            padding-bottom: 70px;
             background-color: var(--bs-body-bg);
         }
-
-        /* Page containers */
-        .page {
-            display: none; /* Hide all pages by default */
+        .page { display: none; }
+        .page.active { display: block; }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            flex-direction: column;
         }
-        .page.active {
-            display: block; /* Show active page */
-        }
-
-        /* Bottom navigation bar */
         .bottom-nav {
             background-color: var(--bs-body-bg);
             border-top: 1px solid var(--bs-border-color);
@@ -39,22 +45,14 @@
             font-size: 0.75rem;
             padding: 0.5rem 0.25rem;
         }
-        .bottom-nav .nav-link i {
-            font-size: 1.5rem;
-        }
-        .bottom-nav .nav-link.active {
-            color: var(--bs-primary);
-        }
-
-        /* Big touch-friendly buttons */
+        .bottom-nav .nav-link i { font-size: 1.5rem; }
+        .bottom-nav .nav-link.active { color: var(--bs-primary); }
         .btn-xxl {
             padding: 1rem 1.5rem;
             font-size: 1.25rem;
             line-height: 1.5;
             border-radius: 0.5rem;
         }
-
-        /* Dashboard quick links */
         .quick-links .btn {
             display: flex;
             flex-direction: column;
@@ -64,28 +62,13 @@
             font-size: 0.9rem;
             white-space: normal;
         }
-        .quick-links .btn i {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Status colors */
-        .status-available {
-            color: var(--bs-primary);
-            border-color: var(--bs-primary);
-        }
-        .status-given, .status-pending {
-            color: var(--bs-danger);
-            border-color: var(--bs-danger);
-        }
-        .status-returned {
-            color: var(--bs-success);
-            border-color: var(--bs-success);
-        }
+        .quick-links .btn i { font-size: 2rem; margin-bottom: 0.5rem; }
+        .status-available { color: var(--bs-primary); border-color: var(--bs-primary); }
+        .status-given, .status-pending { color: var(--bs-danger); border-color: var(--bs-danger); }
+        .status-returned { color: var(--bs-success); border-color: var(--bs-success); }
         .badge.status-available { background-color: var(--bs-primary); }
         .badge.status-given, .badge.status-pending { background-color: var(--bs-danger); }
         .badge.status-returned { background-color: var(--bs-success); }
-        
         .batt-color-dot {
             display: inline-block;
             width: 12px;
@@ -101,25 +84,44 @@
         .batt-color-red { background-color: #f44336; }
         .batt-color-yellow { background-color: #ffeb3b; }
         .batt-color-black { background-color: #212121; }
+        .form-select:focus { border-color: #ced4da; box-shadow: none; outline: 0; }
+        .btn:focus, a:focus, .nav-link:focus { box-shadow: none !important; outline: 0 !important; }
 
-        /* Fix for blue square on select focus */
-        .form-select:focus {
-            border-color: #ced4da;
-            box-shadow: none;
-            outline: 0;
+        /* Style for file input button */
+        .btn-file-input {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-file-input input[type=file] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            cursor: inherit;
+            display: block;
         }
 
-        /* Fix for blue square on buttons and links */
-        .btn:focus, a:focus, .nav-link:focus {
-            box-shadow: none !important;
-            outline: 0 !important;
-        }
     </style>
 </head>
 <body>
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner-border mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Connecting to database...</p>
+    </div>
+
     <!-- Top Navbar -->
     <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark">
+        <!-- ... existing navbar ... -->
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#" onclick="App.navigateTo('dashboard')">
                 <i class="bi bi-battery-charging"></i> Battery Rental Manager
@@ -134,6 +136,9 @@
                             <i class="bi bi-moon-fill"></i> <span>Toggle Theme</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <span class="navbar-text" id="user-id-display" style="font-size: 0.7rem; margin-right: 10px;"></span>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -146,6 +151,7 @@
         <!-- == PAGE: DASHBOARD                          == -->
         <!-- ============================================== -->
         <div id="page-dashboard" class="page active">
+            <!-- ... existing dashboard ... -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2 class="h4">Dashboard</h2>
                 <select class="form-select w-auto" id="dashboardMarketFilter" onchange="App.updateGlobalMarket(this.value)">
@@ -229,6 +235,7 @@
         <!-- == PAGE: GIVE BATTERY (MANUAL)              == -->
         <!-- ============================================== -->
         <div id="page-give-battery" class="page">
+            <!-- ... existing give battery page ... -->
             <h2 class="h4 mb-3">Give Battery (Manual Entry)</h2>
             <p>This page is for assigning *specific* battery numbers to a customer.</p>
             
@@ -275,9 +282,10 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- == PAGE: RETURN BATTERY                     == -->
+        <!-- == PAGE: RETURN BATTERY                        == -->
         <!-- ============================================== -->
         <div id="page-return-battery" class="page">
+            <!-- ... existing return battery page ... -->
             <h2 class="h4 mb-3">Return Battery</h2>
             <p>Showing customers with pending battery returns.</p>
             <input type="text" class="form-control mb-3" id="return-customer-search" placeholder="Search customers..." onkeyup="App.Return.filterCustomers()">
@@ -299,7 +307,8 @@
             
             <div class="input-group mb-3">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" id="customer-search" placeholder="Search by name, phone, or address..." onkeyup="App.Customers.loadList()">
+                <!-- *** UPDATED: Placeholder text *** -->
+                <input type="text" class="form-control" id="customer-search" placeholder="Search by name, serial, phone, or address..." onkeyup="App.Customers.filterList()">
             </div>
             
             <div class="input-group mb-3">
@@ -310,14 +319,15 @@
             </div>
 
             <ul class="list-group" id="customer-list">
-                <!-- Customer list will be populated here -->
+                <!-- Customer list will be populated here by Firestore listener -->
             </ul>
         </div>
 
         <!-- ============================================== -->
-        <!-- == PAGE: BATTERY MANAGEMENT                 == -->
+        <!-- == PAGE: BATTERY MANAGEMENT                    == -->
         <!-- ============================================== -->
         <div id="page-batteries" class="page">
+            <!-- ... existing battery page ... -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2 class="h4 mb-0">Batteries</h2>
                 <div class="btn-group" role="group">
@@ -327,7 +337,7 @@
                     <button class="btn btn-primary" onclick="App.Batteries.showAddModal()">
                         <i class="bi bi-plus-circle"></i> New
                     </button>
-                    <button class="btn btn-danger" onclick="App.Settings.clearBatteries()">
+                    <button class="btn btn-danger" onclick="App.Settings.showClearAllModal()">
                         <i class="bi bi-trash"></i> Clear All
                     </button>
                 </div>
@@ -335,10 +345,11 @@
             
             <div class="input-group mb-3">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control" id="battery-search" placeholder="Search by battery number..." onkeyup="App.Batteries.loadList()">
+                <input type="text" class="form-control" id="battery-search" placeholder="Search by battery number..." onkeyup="App.Batteries.filterList()">
             </div>
 
-            <div class="input-group mb-3">
+            <!-- Removed Market Filter from Battery Page to reflect Single Inventory -->
+            <div class="input-group mb-3 d-none">
                 <label class="input-group-text" for="battery-market-filter">Market</label>
                 <select class="form-select" id="battery-market-filter" onchange="App.updateGlobalMarket(this.value)">
                     <option value="All">All Markets</option>
@@ -347,7 +358,7 @@
 
             <div class="input-group mb-3">
                 <label class="input-group-text" for="battery-status-filter">Status</label>
-                <select class="form-select" id="battery-status-filter" onchange="App.Batteries.loadList()">
+                <select class="form-select" id="battery-status-filter" onchange="App.Batteries.filterList()">
                     <option value="All">All Statuses</option>
                     <option value="Available">Available</option>
                     <option value="Given">Given</option>
@@ -355,14 +366,15 @@
             </div>
 
             <ul class="list-group" id="battery-list">
-                <!-- Battery list will be populated here -->
+                <!-- Battery list will be populated here by Firestore listener -->
             </ul>
         </div>
 
         <!-- ============================================== -->
-        <!-- == PAGE: REPORTS                            == -->
+        <!-- == PAGE: REPORTS                             == -->
         <!-- ============================================== -->
         <div id="page-reports" class="page">
+            <!-- ... existing reports page ... -->
             <h2 class="h4 mb-3">Reports</h2>
             
             <div class="row g-2 mb-3">
@@ -416,7 +428,7 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- == PAGE: SETTINGS                           == -->
+        <!-- == PAGE: SETTINGS                            == -->
         <!-- ============================================== -->
         <div id="page-settings" class="page">
             <h2 class="h4 mb-3">Settings</h2>
@@ -434,35 +446,55 @@
                 </div>
             </div>
             
-            <!-- Backup & Restore -->
+            <!-- *** UPDATED: Data Management *** -->
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">Backup & Restore</h5>
-                    <p class="card-text">Save all your data to a file or restore from a backup.</p>
-                    <div class="d-grid gap-2 d-md-flex">
-                        <button class="btn btn-success" onclick="App.Settings.backupData()">
-                            <i class="bi bi-download"></i> Backup All Data
+                    <h5 class="card-title">Data Management</h5>
+                    <p class="card-text">Import or Export application data.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Import Customers</label>
+                        <p class="small text-muted mb-1">Upload an Excel (.xlsx) or CSV (.csv) file.</p>
+                        <p class="small text-muted mb-2">Required columns: <strong>name, market</strong>. Optional: <strong>serialNumber, mobile, address</strong></p>
+                        <span class="btn btn-success btn-file-input w-100">
+                            <i class="bi bi-upload"></i> Select File & Import
+                            <input type="file" id="customer-import-file" accept=".xlsx, .csv" onchange="App.Settings.handleCustomerImport(event)">
+                        </span>
+                    </div>
+
+                    <div class="border-top pt-3 mb-3">
+                        <label class="form-label fw-bold">Export Customers</label>
+                        <p class="small text-muted mb-2">Download the full customer list as an Excel file.</p>
+                        <button class="btn btn-outline-primary w-100" onclick="App.Settings.exportCustomers()">
+                            <i class="bi bi-person-down"></i> Export Customers List
                         </button>
-                        <button class="btn btn-warning" onclick="document.getElementById('restore-file-input').click()">
-                            <i class="bi bi-upload"></i> Restore from Backup
+                    </div>
+
+                    <!-- *** NEW: Full Export *** -->
+                    <div class="border-top pt-3">
+                        <label class="form-label fw-bold">Full Database Backup</label>
+                        <p class="small text-muted mb-2">Download ALL data (Customers, Batteries, Transactions) in one file.</p>
+                        <button class="btn btn-dark w-100" onclick="App.Settings.exportAllData()">
+                            <i class="bi bi-database-down"></i> Export Full Database
                         </button>
-                        <input type="file" id="restore-file-input" class="d-none" accept=".json" onchange="App.Settings.restoreData(event)">
                     </div>
                 </div>
             </div>
 
             <!-- Danger Zone -->
             <div class="card text-bg-danger mb-3">
+                <!-- ... existing danger zone ... -->
                 <div class="card-body">
                     <h5 class="card-title">Danger Zone</h5>
                     <p class="card-text">Perform irreversible actions.</p>
-                    <button class="btn btn-danger me-2" onclick="App.Settings.resetDailyData()">
+                    <button class="btn btn-danger me-2 mb-2" onclick="App.Settings.showResetModal()">
                         <i class="bi bi-calendar-x"></i> Reset Daily Transactions
                     </button>
-                    <button class="btn btn-danger" onclick="App.Settings.clearBatteries()">
-                        <i class="bi bi-exclamation-triangle"></i> Clear All Batteries
+                    <button class="btn btn-danger mb-2" onclick="App.Settings.showClearAllModal()">
+                        <i class="bi bi-exclamation-triangle"></i> Clear All Batteries & Data
                     </button>
-                    <small class="d-block text-white-50 mt-1">Reset Daily: Clears transactions only. Clear All: Deletes all batteries and transactions.</small>
+                    <small class="d-block text-white-50 mt-1">Reset Daily: Clears transactions and marks all batteries as 'Available'.</small>
+                    <small class="d-block text-white-50 mt-1">Clear All: Deletes ALL batteries and ALL transactions permanently.</small>
                 </div>
             </div>
         </div>
@@ -470,16 +502,17 @@
     </main>
 
     <!-- ============================================== -->
-    <!-- == BOTTOM NAVIGATION                          == -->
+    <!-- == BOTTOM NAVIGATION                        == -->
     <!-- ============================================== -->
     <nav class="navbar fixed-bottom navbar-light bottom-nav nav-pills nav-fill">
+        <!-- ... existing bottom nav ... -->
         <a class="nav-link active" href="#" data-page="dashboard" onclick="App.navigateTo('dashboard')">
             <i class="bi bi-house-door"></i>
             <span>Dashboard</span>
         </a>
         <a class="nav-link" href="#" data-page="give-battery" onclick="App.navigateTo('give-battery')">
             <i class="bi bi-box-arrow-up"></i>
-            <span>Give (Manual)</span> <!-- CHANGED Label -->
+            <span>Give (Manual)</span>
         </a>
         <a class="nav-link" href="#" data-page="return-battery" onclick="App.navigateTo('return-battery')">
             <i class="bi bi-box-arrow-in-down"></i>
@@ -510,6 +543,14 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="customer-id">
+                        
+                        <!-- *** NEW: Customer Serial No. *** -->
+                        <div class="mb-3">
+                            <label for="customer-serial" class="form-label">Customer Serial No. (Optional)</label>
+                            <input type="text" class="form-control" id="customer-serial">
+                            <div class="invalid-feedback" id="customer-serial-error">This serial no. already exists in this market.</div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="customer-market" class="form-label">Market</label>
                             <select class="form-select" id="customer-market" required>
@@ -541,6 +582,7 @@
 
     <!-- Battery Add/Edit Modal -->
     <div class="modal fade" id="batteryModal" tabindex="-1">
+        <!-- ... existing battery modal ... -->
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form id="batteryForm" onsubmit="App.Batteries.save(); return false;">
@@ -555,12 +597,7 @@
                             <input type="text" class="form-control" id="battery-number" required>
                             <div class="invalid-feedback" id="battery-number-error"></div>
                         </div>
-                        <div class="mb-3">
-                            <label for="battery-market" class="form-label">Market</label>
-                            <select class="form-select" id="battery-market" required>
-                                <!-- Market options -->
-                            </select>
-                        </div>
+                        <!-- Removed Market Selection -->
                         <div class="mb-3">
                             <label for="battery-color" class="form-label">Battery Color</label>
                             <select class="form-select" id="battery-color">
@@ -585,6 +622,7 @@
 
     <!-- Battery Range Add Modal -->
     <div class="modal fade" id="batteryRangeModal" tabindex="-1">
+        <!-- ... existing battery range modal ... -->
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form id="batteryRangeForm" onsubmit="App.Batteries.saveRange(); return false;">
@@ -607,18 +645,13 @@
                                 <input type="number" class="form-control" id="battery-range-end" required min="1" value="200">
                             </div>
                         </div>
-                        <div class="mb-3 mt-3">
-                            <label for="battery-range-market" class="form-label">Market</label>
-                            <select class="form-select" id="battery-range-market" required>
-                                <!-- Market options -->
-                            </select>
-                        </div>
+                        <!-- Removed Market Selection -->
                         <div class="mb-3 mt-3">
                             <label for="battery-range-color" class="form-label">Battery Color</label>
                             <select class="form-select" id="battery-range-color">
                                 <option value="default">Default (Grey)</option>
                                 <option value="green">Green</option>
-                                <option value="pink">Pink</option>
+                                <option valuea="pink">Pink</option>
                                 <option value="blue">Blue</option>
                                 <option value="red">Red</option>
                                 <option value="yellow">Yellow</option>
@@ -637,6 +670,7 @@
 
     <!-- Battery Return Modal -->
     <div class="modal fade" id="returnModal" tabindex="-1">
+        <!-- ... existing return modal ... -->
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
@@ -658,10 +692,9 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- == NEW: QUICK GIVE MODAL                    == -->
-    <!-- ============================================== -->
+    <!-- Quick Give Modal -->
     <div class="modal fade" id="quickGiveModal" tabindex="-1">
+        <!-- ... existing quick give modal ... -->
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form id="quickGiveForm" onsubmit="App.Customers.submitQuickGive(); return false;">
@@ -678,6 +711,7 @@
                             <label for="quick-give-battery-count" class="form-label">Number of batteries to give:</label>
                             <input type="number" class="form-control form-control-lg" id="quick-give-battery-count" required min="1" value="1">
                         </div>
+                        <small class="text-muted">Batteries will be automatically selected from global inventory.</small>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -690,11 +724,71 @@
         </div>
     </div>
 
+    <!-- Reset Confirmation Modal -->
+    <div class="modal fade" id="resetModal" tabindex="-1">
+        <!-- ... existing reset modal ... -->
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Action</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to reset all daily data? This will:</p>
+                    <ul class="list-group">
+                        <li class="list-group-item list-group-item-danger">Delete ALL transaction records.</li>
+                        <li class="list-group-item list-group-item-danger">Mark ALL 'Given' batteries as 'Available'.</li>
+                    </ul>
+                    <p class="mt-3"><strong>This action cannot be undone.</strong></p>
+                    <div class="mb-3">
+                        <label for="reset-confirm-text" class="form-label">Type "RESET" to confirm:</label>
+                        <input type="text" class="form-control" id="reset-confirm-text" placeholder="RESET">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-reset-btn" onclick="App.Settings.confirmResetDailyData()">Reset Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear All Confirmation Modal -->
+    <div class="modal fade" id="clearAllModal" tabindex="-1">
+        <!-- ... existing clear all modal ... -->
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm DELETE ALL DATA</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This is the most dangerous action. This will permanently delete:</p>
+                    <ul class="list-group">
+                        <li class="list-group-item list-group-item-danger"><strong>ALL Batteries</strong> from the database.</li>
+                        <li class="list-group-item list-group-item-danger"><strong>ALL Transactions</strong> from the database.</li>
+                    </ul>
+                    <p class="mt-3">Your customers and settings will NOT be deleted.</p>
+                    <p class="mt-3"><strong>THIS ACTION CANNOT BE UNDONE.</strong></p>
+                    <div class="mb-3">
+                        <label for="clear-all-confirm-text" class="form-label">Type "DELETE ALL" to confirm:</label>
+                        <input type="text" class="form-control" id="clear-all-confirm-text" placeholder="DELETE ALL">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-clear-all-btn" onclick="App.Settings.confirmClearAllData()">Delete All Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ============================================== -->
     <!-- == TOAST CONTAINER                          == -->
     <!-- ============================================== -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+        <!-- ... existing toast ... -->
         <div id="appToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
                 <i class="bi bi-check-circle-fill me-2"></i>
@@ -709,216 +803,371 @@
 
 
     <!-- ============================================== -->
-    <!-- == JAVASCRIPT LIBRARIES                       == -->
+    <!-- == JAVASCRIPT LIBRARIES                     == -->
     <!-- ============================================== -->
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Dexie.js (IndexedDB Wrapper) -->
-    <script src="https://unpkg.com/dexie@4.0.7/dist/dexie.js"></script>
-    <!-- SheetJS (Excel Export) -->
+    
+    <!-- SheetJS (Excel Export & Import) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
-    <!-- ============================================== -->
-    <!-- == APPLICATION JAVASCRIPT                     == -->
-    <!-- ============================================== -->
-    <script>
-        // ----------------------------------------
-        // 1. DATABASE SETUP (DEXIE.JS)
-        // ----------------------------------------
-        const db = new Dexie('BatteryRentalManager');
-        db.version(4).stores({ // Upped version to add index for transactions
-            customers: '++id, name, mobile, address, market, isActive',
-            batteries: '++id, &batteryNumber, status, color, market, [market+status]', 
-            transactions: '++id, customerId, batteryNumber, market, dateGiven, dateReturned, status, [customerId+status], [market+status]', // <-- ADDED [market+status] INDEX
-            settings: 'key' // Simple key-value store (e.g., 'markets')
-        }).upgrade(tx => {
-            // Upgrade from version 3 to 4 is just adding an index,
-            // but we keep the v3 upgrade logic just in case someone is on v2
-            return tx.table('batteries').toCollection().modify(battery => {
-                if (battery.color === undefined) {
-                    battery.color = 'default';
-                }
-                if (battery.market === undefined) {
-                    battery.market = 'Unassigned'; // Assign old batteries to 'Unassigned'
-                }
-            });
-        });
-
-        // Populate initial settings
-        db.on('populate', async () => {
-            await db.settings.put({
-                key: 'markets',
-                value: ['Sunday', 'Wednesday', 'Friday', 'Unassigned'] // Added Unassigned
-            });
-        });
+    <!-- NEW: Firebase SDKs -->
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithCustomToken, 
+            signInAnonymously, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            addDoc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            collection, 
+            query, 
+            where, 
+            getDocs,
+            writeBatch,
+            serverTimestamp,
+            Timestamp,
+            limit,
+            documentId,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ----------------------------------------
-        // 2. MAIN APP CONTROLLER
+        // 1. FIREBASE SETUP
+        // ----------------------------------------
+        
+        // Use provided config variables
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config)
+            : {
+                // This is the user's provided config
+                apiKey: "AIzaSyA-5Z_HVVwHn14czFkt14__srZ4U14ypXw",
+                authDomain: "rental1-7718e.firebaseapp.com",
+                projectId: "rental1-7718e",
+                storageBucket: "rental1-7718e.firebasestorage.app",
+                messagingSenderId: "280685899242",
+                appId: "1:280685899242:web:d49d07717fac7989e21693"
+              };
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Initialize Firebase
+        const fbApp = initializeApp(firebaseConfig);
+        const db = getFirestore(fbApp);
+        const auth = getAuth(fbApp);
+        
+        // Enable Firestore debug logging
+        setLogLevel('debug');
+
+        // Make Firestore functions globally available to our App object
+        window.fb = {
+            db,
+            doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+            collection, query, where, getDocs, writeBatch, serverTimestamp,
+            Timestamp, limit, documentId
+        };
+
+        // Helper function to break an array into chunks
+        const chunkArray = (arr, size) => {
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += size) {
+                chunks.push(arr.slice(i, i + size));
+            }
+            return chunks;
+        };
+        
+        // ----------------------------------------
+        // 2. MAIN APP CONTROLLER (Firebase-enabled)
         // ----------------------------------------
         const App = {
             
             // App state
             state: {
-                markets: ['Sunday', 'Wednesday', 'Friday', 'Unassigned'], // Added Unassigned
-                globalMarketFilter: 'All', // NEW: Global filter
+                markets: ['Sunday', 'Wednesday', 'Friday', 'Unassigned'],
+                globalMarketFilter: 'All',
                 currentPage: 'dashboard',
-                currentCustomerModal: null, // Bootstrap modal instance
-                currentBatteryModal: null, // Bootstrap modal instance
-                currentBatteryRangeModal: null, // Bootstrap modal instance
-                currentReturnModal: null, // Bootstrap modal instance
-                currentQuickGiveModal: null, // *** NEW ***
-                appToast: null // Bootstrap toast instance
+                
+                // Modal instances
+                currentCustomerModal: null,
+                currentBatteryModal: null,
+                currentBatteryRangeModal: null,
+                currentReturnModal: null,
+                currentQuickGiveModal: null,
+                currentResetModal: null, 
+                currentClearAllModal: null, 
+                appToast: null,
+                
+                // Auth & Data State
+                userId: null,
+                isAuthReady: false,
+                isDataReady: false,
+                
+                // Firestore Listeners (to unsubscribe later)
+                listeners: {
+                    customers: null,
+                    batteries: null,
+                    transactions: null,
+                    settings: null
+                },
+                
+                // Local Caches (for filtering)
+                localCache: {
+                    customers: [],
+                    batteries: [],
+                    transactions: []
+                },
+                
+                // Firestore Paths
+                dbPaths: {
+                    customers: `artifacts/${appId}/public/data/customers`,
+                    batteries: `artifacts/${appId}/public/data/batteries`,
+                    transactions: `artifacts/${appId}/public/data/transactions`,
+                    settings: `artifacts/${appId}/public/data/settings`
+                },
+                cacheTTL: 15 * 60 * 1000 // 15 minutes in milliseconds
+            },
+
+            /**
+             * NEW: Natural Sort Helper (MOVED INSIDE APP)
+             * Sorts strings with numbers in a "human" way (e.g., 1, 2, 10 instead of 1, 10, 2)
+             */
+            naturalSort: (a, b) => {
+                const sA = a.serialNumber || '';
+                const sB = b.serialNumber || '';
+
+                if (sA && !sB) return -1; // A has serial, B does not -> A comes first
+                if (!sA && sB) return 1;  // B has serial, A does not -> B comes first
+                if (!sA && !sB) return a.name.localeCompare(b.name); // Neither has serial, sort by name
+
+                // Both have serials, do natural sort
+                const re = /(\d+)/g;
+                const sA_parts = sA.toString().split(re);
+                const sB_parts = sB.toString().split(re);
+
+                for (let i = 0; i < Math.min(sA_parts.length, sB_parts.length); i++) {
+                    let partA = sA_parts[i];
+                    let partB = sB_parts[i];
+
+                    if (i % 2 === 1) { // It's a number part
+                        partA = parseInt(partA, 10);
+                        partB = parseInt(partB, 10);
+                    }
+
+                    if (partA !== partB) {
+                        return partA < partB ? -1 : 1;
+                    }
+                }
+                return sA_parts.length - sB_parts.length; // Shorter string comes first
             },
 
             // App Initialization
-            init: async () => {
+            init: () => {
+                // This starts the app
                 document.addEventListener('DOMContentLoaded', () => {
-                    // Load global market filter *first*
-                    App.state.globalMarketFilter = localStorage.getItem('battery-manager-market') || 'All';
-
-                    // Initialize Bootstrap components
-                    App.state.currentCustomerModal = new bootstrap.Modal(document.getElementById('customerModal'));
-                    App.state.currentBatteryModal = new bootstrap.Modal(document.getElementById('batteryModal'));
-                    App.state.currentBatteryRangeModal = new bootstrap.Modal(document.getElementById('batteryRangeModal'));
-                    App.state.currentReturnModal = new bootstrap.Modal(document.getElementById('returnModal'));
-                    App.state.currentQuickGiveModal = new bootstrap.Modal(document.getElementById('quickGiveModal')); // *** NEW ***
-                    App.state.appToast = new bootstrap.Toast(document.getElementById('appToast'));
-
-                    // Load settings
-                    App.Settings.load();
-                    App.Dashboard.refresh();
-
-                    // Set initial page
-                    App.navigateTo('dashboard');
+                    App.initBootstrap();
+                    App.initAuth();
                 });
             },
 
-            // Page Navigation
-            navigateTo: (pageId) => {
-                App.state.currentPage = pageId;
-                // Hide all pages
-                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-                // Show target page
-                document.getElementById(`page-${pageId}`).classList.add('active');
+            initBootstrap: () => {
+                // Initialize all Bootstrap components
+                App.state.currentCustomerModal = new bootstrap.Modal(document.getElementById('customerModal'));
+                App.state.currentBatteryModal = new bootstrap.Modal(document.getElementById('batteryModal'));
+                App.state.currentBatteryRangeModal = new bootstrap.Modal(document.getElementById('batteryRangeModal'));
+                App.state.currentReturnModal = new bootstrap.Modal(document.getElementById('returnModal'));
+                App.state.currentQuickGiveModal = new bootstrap.Modal(document.getElementById('quickGiveModal'));
+                App.state.currentResetModal = new bootstrap.Modal(document.getElementById('resetModal'));
+                App.state.currentClearAllModal = new bootstrap.Modal(document.getElementById('clearAllModal')); 
+                App.state.appToast = new bootstrap.Toast(document.getElementById('appToast'));
+                App.loadTheme();
+            },
+
+            initAuth: () => {
+                // ... existing auth ...
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        App.state.userId = user.uid;
+                        App.state.isAuthReady = true;
+                        document.getElementById('user-id-display').textContent = `User: ${user.uid.substring(0, 6)}`;
+                        console.log("User authenticated:", App.state.userId);
+                        App.initAppLogic();
+                    } else if (App.state.isAuthReady === false) {
+                        App.state.isAuthReady = "pending";
+                        console.log("No user, attempting sign-in...");
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                console.log("Signing in with custom token...");
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                console.log("Signing in anonymously...");
+                                await signInAnonymously(auth);
+                            }
+                        } catch (error) {
+                            console.error("Firebase Auth Error:", error);
+                            document.getElementById('loading-overlay').innerHTML = `<p class="text-danger">Authentication Failed. Please refresh.</p>`;
+                        }
+                    }
+                });
+            },
+            
+            initAppLogic: () => {
+                // ... existing app logic init ...
+                console.log("Initializing app logic and data listeners...");
+                App.state.globalMarketFilter = localStorage.getItem('battery-manager-market') || 'All';
+                App.Settings.loadAndListen(); // This one is fine, it's a single doc
                 
-                // Update bottom nav active state
+                // OLD way (too many reads)
+                // App.Customers.listenForUpdates();
+                // App.Batteries.listenForUpdates();
+                // App.Return.listenForUpdates(); 
+
+                // NEW way (efficient)
+                App.initDataListeners();
+                
+                App.navigateTo('dashboard');
+                App.state.isDataReady = true;
+                document.getElementById('loading-overlay').style.display = 'none';
+            },
+
+            renderCurrentPage: () => {
+                // ... existing render logic ...
+                if (!App.state.isDataReady) return; 
+                console.log(`Rerendering page: ${App.state.currentPage}`);
+                App.Dashboard.refresh(); 
+
+                switch (App.state.currentPage) {
+                    case 'customers': 
+                        App.Customers.filterList(); 
+                        break;
+                    case 'batteries': 
+                        App.Batteries.filterList(); 
+                        break;
+                    case 'give-battery': 
+                        App.Give.loadCustomersForMarket(); 
+                        break;
+                    case 'return-battery': 
+                        App.Return.renderList(); 
+                        break;
+                }
+            },
+
+            navigateTo: (pageId) => {
+                // ... existing navigation logic ...
+                if (!App.state.isAuthReady) {
+                    console.warn("navigateTo called before auth is ready. Ignoring.");
+                    return;
+                }
+                if (pageId !== 'dashboard' && !App.state.isDataReady) {
+                    console.warn("navigateTo called before data is ready. Ignoring.");
+                    return;
+                }
+                App.state.currentPage = pageId;
+                document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+                const pageEl = document.getElementById(`page-${pageId}`);
+                if (pageEl) {
+                    pageEl.classList.add('active');
+                }
                 document.querySelectorAll('.bottom-nav .nav-link').forEach(link => {
                     link.classList.toggle('active', link.dataset.page === pageId);
                 });
-
-                // Run page-specific load logic
-                switch (pageId) {
-                    case 'dashboard': App.Dashboard.refresh(); break;
-                    case 'customers': App.Customers.loadList(); break;
-                    case 'batteries': App.Batteries.loadList(); break;
-                    case 'give-battery': App.Give.load(); break;
-                    case 'return-battery': App.Return.load(); break;
-                    case 'reports': App.Reports.load(); break;
-                    case 'settings': App.Settings.load(); break;
-                }
+                if (pageId === 'give-battery') App.Give.load(); 
+                if (pageId === 'reports') App.Reports.load(); 
+                App.renderCurrentPage(); 
             },
 
-            // UI Helpers
             showToast: (title, message, type = 'success') => {
-                const toastInstance = App.state.appToast; // This is the BS Toast instance
-                const toastEl = document.getElementById('appToast'); // This is the HTML element
-                
-                if (!toastInstance || !toastEl) {
-                    console.error("Toast component not initialized.");
-                    return;
-                }
-
+                // ... existing toast logic ...
+                const toastInstance = App.state.appToast;
+                const toastEl = document.getElementById('appToast');
+                if (!toastInstance || !toastEl) { console.error("Toast component not initialized."); return; }
                 const toastHeader = toastEl.querySelector('.toast-header');
                 const toastTitle = toastEl.querySelector('#toastTitle');
                 const toastBody = toastEl.querySelector('#toastBody');
-                const toastIcon = toastHeader.querySelector('i'); // Get icon from header
-
-                if (!toastHeader || !toastTitle || !toastBody || !toastIcon) {
-                    console.error("Toast HTML structure is incorrect.");
-                    return;
-                }
-                
-                // Reset classes
+                const toastIcon = toastHeader.querySelector('i');
+                if (!toastHeader || !toastTitle || !toastBody || !toastIcon) { console.error("Toast HTML structure is incorrect."); return; }
                 toastHeader.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-warning');
-                toastIcon.className = ''; // Reset icon class
-
+                toastIcon.className = '';
                 if (type === 'success') {
                     toastHeader.classList.add('text-bg-success');
                     toastIcon.className = 'bi bi-check-circle-fill me-2';
                 } else if (type === 'error') {
                     toastHeader.classList.add('text-bg-danger');
                     toastIcon.className = 'bi bi-exclamation-triangle-fill me-2';
-                } else { // info
+                } else {
                     toastHeader.classList.add('text-bg-warning');
                     toastIcon.className = 'bi bi-info-circle-fill me-2';
                 }
-
                 toastTitle.textContent = title;
                 toastBody.textContent = message;
                 toastInstance.show();
             },
 
-            // NEW: Global Market Updater
             updateGlobalMarket: (market) => {
+                // ... existing market update logic ...
                 App.state.globalMarketFilter = market;
                 localStorage.setItem('battery-manager-market', market);
-
-                // Update all other selects
                 const selects = document.querySelectorAll('select[id*="-market"], select[id*="MarketFilter"]');
                 selects.forEach(select => {
                     if (Array.from(select.options).some(opt => opt.value === market)) {
                         select.value = market;
                     } else {
-                        // Fallback for selects that don't have this market
                         if (select.id.includes('Filter') || select.id.includes('report')) {
-                            select.value = 'All'; // Filters default to 'All'
+                            select.value = 'All';
                         } else {
-                            select.value = ''; // Required fields default to 'Select'
+                            select.value = '';
                         }
                     }
                 });
-
-                // Refresh the *current* page's content
-                switch (App.state.currentPage) {
-                    case 'dashboard': App.Dashboard.refresh(); break;
-                    case 'customers': App.Customers.loadList(); break;
-                    case 'batteries': App.Batteries.loadList(); break;
-                    case 'give-battery': App.Give.loadCustomersForMarket(); break;
-                }
+                
+                // OLD: App.renderCurrentPage();
+                // NEW: Re-initialize listeners for the new market. This will auto-render.
+                App.initDataListeners();
             },
 
             populateMarketSelects: () => {
+                // ... existing market populate logic ...
                 const selects = document.querySelectorAll('select[id*="-market"], select[id*="MarketFilter"]');
                 const globalMarket = App.state.globalMarketFilter;
-
                 selects.forEach(select => {
+                    let currentVal = select.value; 
                     let options = '';
                     if (select.id.includes('Filter') || select.id.includes('report')) {
                         options += '<option value="All">All Markets</option>';
                     }
-                    if (select.id.includes('give') || select.id === 'battery-market' || select.id === 'battery-range-market') {
+                    // Updated: Removed battery-related selects from this logic as they no longer exist or don't need market
+                    if (select.id.includes('give') || select.id === 'customer-market') {
                         options += '<option value="">-- Select a Market --</option>';
                     }
                     App.state.markets.forEach(market => {
                         options += `<option value="${market}">${market}</option>`;
                     });
                     select.innerHTML = options;
-
-                    // Now set value based on global state
-                    if (Array.from(select.options).some(opt => opt.value === globalMarket)) {
+                    if (Array.from(select.options).some(opt => opt.value === currentVal)) {
+                          select.value = currentVal;
+                    } else if (Array.from(select.options).some(opt => opt.value === globalMarket)) {
                         select.value = globalMarket;
                     } else {
-                        // Global state is not a valid option, fall back
                         if (select.id.includes('Filter') || select.id.includes('report')) {
                             select.value = 'All';
                         } else {
-                            select.value = ''; // Default to "select a market"
+                            select.value = '';
                         }
                     }
                 });
             },
 
             toggleDarkMode: () => {
+                // ... existing dark mode logic ...
                 const html = document.documentElement;
                 const currentTheme = html.getAttribute('data-bs-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -927,6 +1176,7 @@
             },
 
             loadTheme: () => {
+                // ... existing theme load logic ...
                 const savedTheme = localStorage.getItem('battery-manager-theme');
                 if (savedTheme) {
                     document.documentElement.setAttribute('data-bs-theme', savedTheme);
@@ -935,113 +1185,106 @@
         };
 
         // ----------------------------------------
-        // 3. DASHBOARD MODULE
+        // NEW CACHING HELPER FUNCTIONS
+        // ----------------------------------------
+        App.setCache = (key, data) => {
+            try {
+                const cacheEntry = {
+                    timestamp: new Date().getTime(),
+                    data: data
+                };
+                localStorage.setItem(`brm-cache-${key}`, JSON.stringify(cacheEntry));
+                console.log(`Cache set for: ${key}`);
+            } catch (e) {
+                console.error("Error setting cache (data might be too large):", e);
+                localStorage.removeItem(`brm-cache-${key}`); // Clear partial cache
+            }
+        };
+
+        App.getCache = (key) => {
+            const entry = localStorage.getItem(`brm-cache-${key}`);
+            if (!entry) {
+                console.log(`Cache miss for: ${key}`);
+                return null;
+            }
+
+            try {
+                const cacheEntry = JSON.parse(entry);
+                const isStale = (new Date().getTime() - cacheEntry.timestamp) > App.state.cacheTTL;
+                
+                if (isStale) {
+                    console.log(`Cache is STALE for: ${key}`);
+                    localStorage.removeItem(`brm-cache-${key}`);
+                    return null;
+                }
+                
+                console.log(`Cache HIT for: ${key}`);
+                return cacheEntry.data;
+            } catch (e) {
+                console.error("Error reading cache:", e);
+                localStorage.removeItem(`brm-cache-${key}`);
+                return null;
+            }
+        };
+
+        // ----------------------------------------
+        // 3. DASHBOARD MODULE (Firebase)
         // ----------------------------------------
         App.Dashboard = {
-            refresh: async () => {
+            refresh: () => {
+                // ... existing dashboard refresh logic ...
+                if (!App.state.isDataReady) return; 
                 const market = document.getElementById('dashboardMarketFilter').value;
-                let marketFilter = market === 'All' ? {} : { market: market };
-
+                const marketFilter = market === 'All' ? null : market;
                 try {
-                    // *** FIX: Use .count() for 'All', .where(marketFilter).count() for specific market ***
-                    const total = (market === 'All')
-                        ? await db.batteries.count()
-                        : await db.batteries.where(marketFilter).count();
-                        
-                    const available = await db.batteries.where({ status: 'Available', ...marketFilter }).count();
-                    const rented = await db.batteries.where({ status: 'Given', ...marketFilter }).count();
-                    // This query will now work thanks to the new index in db.version(4)
-                    const pending = await db.transactions.where({ status: 'Pending', ...marketFilter }).count();
-
+                    const allBatteries = App.state.localCache.batteries;
+                    const allTransactions = App.state.localCache.transactions;
+                    // Batteries are now GLOBAL, so we don't filter them by market for stats unless explicitly requested.
+                    // But wait, dashboard stats usually reflect "Stock in Market". 
+                    // Since stock is global, Total and Available should show GLOBAL counts.
+                    // Rented and Pending should filter by transaction market.
+                    
+                    const transactions = marketFilter ? allTransactions.filter(t => t.market === marketFilter) : allTransactions;
+                    
+                    // Battery stats: Global
+                    const total = allBatteries.length;
+                    const available = allBatteries.filter(b => b.status === 'Available').length;
+                    const rented = allBatteries.filter(b => b.status === 'Given').length;
+                    
+                    const pending = transactions.filter(t => t.status === 'Pending').length;
+                    
                     document.getElementById('stat-total').textContent = total;
                     document.getElementById('stat-available').textContent = available;
                     document.getElementById('stat-rented').textContent = rented;
                     document.getElementById('stat-pending').textContent = pending;
                 } catch (error) {
                     console.error("Error refreshing dashboard:", error);
-                    App.showToast("Error", "Could not load dashboard stats.", "error");
                 }
             }
         };
 
         // ----------------------------------------
-        // 4. CUSTOMER MODULE
+        // 4. CUSTOMER MODULE (Firebase)
         // ----------------------------------------
         App.Customers = {
-            showModal: (id = null) => {
-                const form = document.getElementById('customerForm');
-                form.reset();
-                form.classList.remove('was-validated');
-                document.getElementById('customer-id').value = '';
-                
-                if (id) {
-                    // Edit mode
-                    document.getElementById('customerModalTitle').textContent = 'Edit Customer';
-                    db.customers.get(id).then(customer => {
-                        document.getElementById('customer-id').value = customer.id;
-                        document.getElementById('customer-market').value = customer.market;
-                        document.getElementById('customer-name').value = customer.name;
-                        document.getElementById('customer-mobile').value = customer.mobile;
-                        document.getElementById('customer-address').value = customer.address;
-                    });
-                } else {
-                    // Add mode
-                    document.getElementById('customerModalTitle').textContent = 'Add Customer';
-                }
-                App.state.currentCustomerModal.show();
-            },
+            // OLD listenForUpdates removed. Logic is now in initDataListeners
 
-            save: async () => {
-                const form = document.getElementById('customerForm');
-                if (!form.checkValidity()) {
-                    form.classList.add('was-validated');
-                    return;
-                }
-
-                const id = document.getElementById('customer-id').value;
-                const customerData = {
-                    market: document.getElementById('customer-market').value,
-                    name: document.getElementById('customer-name').value,
-                    mobile: document.getElementById('customer-mobile').value,
-                    address: document.getElementById('customer-address').value,
-                    isActive: 1
-                };
-
-                try {
-                    if (id) {
-                        // Update
-                        await db.customers.update(parseInt(id), customerData);
-                        App.showToast("Success", "Customer updated successfully.");
-                    } else {
-                        // Create
-                        await db.customers.add(customerData);
-                        App.showToast("Success", "Customer added successfully.");
-                    }
-                    App.state.currentCustomerModal.hide();
-                    App.Customers.loadList();
-                } catch (error) {
-                    console.error("Error saving customer:", error);
-                    App.showToast("Error", "Failed to save customer.", "error");
-                }
-            },
-
-            loadList: async () => {
+            // *** UPDATED: filterList (search and render) ***
+            filterList: () => {
                 const searchTerm = document.getElementById('customer-search').value.toLowerCase();
                 const marketFilter = document.getElementById('customer-market-filter').value;
-                
-                let query = db.customers.where('isActive').equals(1);
-                
-                if (marketFilter !== 'All') {
-                    query = query.and(customer => customer.market === marketFilter);
-                }
+                const customers = App.state.localCache.customers;
 
-                const customers = await query.toArray();
-
-                const filteredCustomers = customers.filter(c =>
-                    c.name.toLowerCase().includes(searchTerm) ||
-                    (c.mobile && c.mobile.includes(searchTerm)) || // Added check for mobile
-                    (c.address && c.address.toLowerCase().includes(searchTerm)) // Added check for address
-                );
+                const filteredCustomers = customers.filter(c => {
+                    const inMarket = (marketFilter === 'All' || c.market === marketFilter);
+                    const inSearch = (
+                        c.name.toLowerCase().includes(searchTerm) ||
+                        (c.mobile && c.mobile.includes(searchTerm)) ||
+                        (c.address && c.address.toLowerCase().includes(searchTerm)) ||
+                        (c.serialNumber && c.serialNumber.toLowerCase().includes(searchTerm)) // Search serial
+                    );
+                    return inMarket && inSearch;
+                });
 
                 const listEl = document.getElementById('customer-list');
                 listEl.innerHTML = '';
@@ -1050,126 +1293,230 @@
                     return;
                 }
 
-                filteredCustomers.sort((a, b) => a.name.localeCompare(b.name)).forEach(customer => {
-                    listEl.innerHTML += `
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-0">${customer.name}</h6>
-                                <small class="text-muted">${customer.mobile || 'No Phone'} | ${customer.market}</small><br>
-                                <small class="text-muted">${customer.address || 'No Address'}</small>
+                // Sort by new natural sort and render
+            filteredCustomers.sort(App.naturalSort).forEach((customer, index) => {
+                const serial = customer.serialNumber || ''; // Get serial
+                listEl.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-start"> <!-- align-items-start is better -->
+                            <div style="min-width: 0; margin-right: 1rem; flex-grow: 1;"> <!-- This div will grow and wrap -->
+                                <div class="d-flex">
+                                    <span class="text-muted fw-bold" style="width: 50px; flex-shrink: 0;">${serial}</span>
+                                    <div style="margin-left: 5px;">
+                                        <h6 class="mb-0" style="word-wrap: break-word;">${customer.name}</h6>
+                                        <small class="text-muted">${customer.mobile || 'No Phone'} | ${customer.market}</small><br>
+                                        <small class="text-muted" style="word-wrap: break-word;">${customer.address || 'No Address'}</small>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="btn-group">
-                                <!-- *** NEW: QUICK GIVE BUTTON *** -->
-                                <button class="btn btn-sm btn-outline-success" onclick="App.Customers.showQuickGiveModal(${customer.id}, '${customer.name}', '${customer.market}')">
+                            <div class="btn-group" style="flex-shrink: 0;"> <!-- This div will not shrink -->
+                                <button class="btn btn-sm btn-outline-success" title="Quick Give" onclick="App.Customers.showQuickGiveModal('${customer.id}', '${customer.name}', '${customer.market}')">
                                     <i class="bi bi-lightning-fill"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="App.Customers.showModal(${customer.id})">
+                                <button class="btn btn-sm btn-outline-primary" title="Edit" onclick="App.Customers.showModal('${customer.id}')">
                                     <i class="bi bi-pencil"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="App.Customers.delete(${customer.id})">
+                                <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="App.Customers.delete('${customer.id}')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
                         </li>
                     `;
-                });
+            });
+            },
+
+            // *** UPDATED: showModal ***
+            showModal: async (id = null) => {
+                const form = document.getElementById('customerForm');
+                form.reset();
+                form.classList.remove('was-validated');
+                document.getElementById('customer-id').value = '';
+                document.getElementById('customer-serial').classList.remove('is-invalid'); // Reset error
+                
+                if (id) {
+                    // Edit mode
+                    document.getElementById('customerModalTitle').textContent = 'Edit Customer';
+                    const customer = App.state.localCache.customers.find(c => c.id === id);
+                    if(customer) {
+                        document.getElementById('customer-id').value = customer.id;
+                        document.getElementById('customer-serial').value = customer.serialNumber || ''; // Set serial
+                        document.getElementById('customer-market').value = customer.market;
+                        document.getElementById('customer-name').value = customer.name;
+                        document.getElementById('customer-mobile').value = customer.mobile;
+                        document.getElementById('customer-address').value = customer.address;
+                    }
+                } else {
+                    // Add mode
+                    document.getElementById('customerModalTitle').textContent = 'Add Customer';
+                    document.getElementById('customer-serial').value = ''; // Clear serial
+                    const globalMarket = App.state.globalMarketFilter;
+                    if (globalMarket !== 'All') {
+                        document.getElementById('customer-market').value = globalMarket;
+                    }
+                }
+                App.state.currentCustomerModal.show();
+            },
+
+            // *** NEW: getNextSerialNumber (Market-Specific) ***
+            getNextSerialNumber: (market) => {
+                // Filter customers by the specified market first
+                const customers = App.state.localCache.customers.filter(c => c.market === market);
+                let maxSerial = 0;
+                for (const customer of customers) {
+                    if (customer.serialNumber) {
+                        const serialNum = parseInt(customer.serialNumber, 10);
+                        if (!isNaN(serialNum) && serialNum > maxSerial) {
+                            maxSerial = serialNum;
+                        }
+                    }
+                }
+                return String(maxSerial + 1); // Return as a string
+            },
+
+            // *** UPDATED: save ***
+            save: async () => {
+                const form = document.getElementById('customerForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                const id = document.getElementById('customer-id').value;
+                const serialInput = document.getElementById('customer-serial');
+                const serial = serialInput.value.trim();
+                const market = document.getElementById('customer-market').value;
+                
+                // --- NEW: Auto-increment logic (Market-Specific) ---
+                let finalSerial = serial;
+                if (!id && !serial) { // Only auto-increment on ADD and if serial is BLANK
+                    finalSerial = App.Customers.getNextSerialNumber(market);
+                }
+                // --- End new logic ---
+
+                const customerData = {
+                    market: market,
+                    name: document.getElementById('customer-name').value,
+                    mobile: document.getElementById('customer-mobile').value,
+                    address: document.getElementById('customer-address').value,
+                    serialNumber: finalSerial, // Save final serial
+                    isActive: 1
+                };
+
+                try {
+                    // Check for duplicate serial number IN THIS MARKET
+                    if (finalSerial) { 
+                        const q = fb.query(
+                            fb.collection(fb.db, App.state.dbPaths.customers), 
+                            fb.where('serialNumber', '==', finalSerial), 
+                            fb.where('market', '==', market), // Scoped to market
+                            fb.where('isActive', '==', 1)
+                        );
+                        const snapshot = await fb.getDocs(q);
+                        
+                        let isDuplicate = false;
+                        if (!snapshot.empty) {
+                            if (id) { // Edit mode
+                                // It's a duplicate only if it's not THIS customer
+                                isDuplicate = snapshot.docs.some(doc => doc.id !== id);
+                            } else { // Add mode
+                                isDuplicate = true;
+                            }
+                        }
+
+                        if (isDuplicate) {
+                            serialInput.classList.add('is-invalid');
+                            App.showToast("Error", `Serial number "${finalSerial}" already exists in ${market}.`, "error"); 
+                            return;
+                        }
+                    }
+                    serialInput.classList.remove('is-invalid');
+
+
+                    if (id) {
+                        // Update
+                        const docRef = fb.doc(fb.db, App.state.dbPaths.customers, id);
+                        await fb.updateDoc(docRef, customerData);
+                        App.showToast("Success", "Customer updated successfully.");
+                    } else {
+                        // Create
+                        const collRef = fb.collection(fb.db, App.state.dbPaths.customers);
+                        await fb.addDoc(collRef, customerData);
+                        App.showToast("Success", "Customer added successfully.");
+                    }
+                    App.state.currentCustomerModal.hide();
+                    // Listener will update UI
+                } catch (error) {
+                    console.error("Error saving customer:", error);
+                    App.showToast("Error", "Failed to save customer.", "error");
+                }
             },
 
             delete: async (id) => {
-                // if (confirm('Are you sure you want to delete this customer? Their records will be kept but marked inactive.')) { // REMOVED confirm()
-                    try {
-                        // We don't delete, we mark as inactive
-                        await db.customers.update(id, { isActive: 0 });
-                        App.showToast("Success", "Customer marked as inactive.");
-                        App.Customers.loadList();
-                    } catch (error) {
-                        App.showToast("Error", "Could not delete customer.", "error");
-                    }
-                // }
+                // ... existing delete logic ...
+                try {
+                    const docRef = fb.doc(fb.db, App.state.dbPaths.customers, id);
+                    await fb.updateDoc(docRef, { isActive: 0 });
+                    App.showToast("Success", "Customer marked as inactive.");
+                } catch (error) {
+                    App.showToast("Error", "Could not delete customer.", "error");
+                }
             },
 
-            // *** NEW: Show Quick Give Modal ***
             showQuickGiveModal: (id, name, market) => {
+                // ... existing quick give modal ...
                 const form = document.getElementById('quickGiveForm');
                 form.reset();
                 form.classList.remove('was-validated');
-
                 document.getElementById('quick-give-customer-id').value = id;
                 document.getElementById('quick-give-customer-market').value = market;
-                document.getElementById('quickGiveModalTitle').textContent = `Quick Give to ${name}`;
+                document.getElementById('quickGiveModalTitle').textContent = `Quick Give`;
                 document.getElementById('quick-give-customer-name-display').textContent = `Customer: ${name} (Market: ${market})`;
-                document.getElementById('quick-give-battery-count').value = 1; // Default to 1
-                
+                document.getElementById('quick-give-battery-count').value = 1;
                 App.state.currentQuickGiveModal.show();
             },
 
-            // *** NEW: Submit Quick Give Logic ***
             submitQuickGive: async () => {
+                // ... existing quick give submit ...
                 const form = document.getElementById('quickGiveForm');
                  if (!form.checkValidity()) {
                     form.classList.add('was-validated');
                     return;
                 }
-
-                const customerId = parseInt(document.getElementById('quick-give-customer-id').value);
+                const customerId = document.getElementById('quick-give-customer-id').value;
                 const market = document.getElementById('quick-give-customer-market').value;
                 const count = parseInt(document.getElementById('quick-give-battery-count').value);
-
                 if (!customerId || !market || !count || count <= 0) {
                     App.showToast("Error", "Invalid data. Please try again.", "error");
                     return;
                 }
-
                 try {
-                    // 1. Find available batteries in this market, limited to the count
-                    const availableBatteries = await db.batteries.where({ 
-                        market: market, 
-                        status: 'Available' 
-                    }).limit(count).toArray();
-
-                    // 2. Check if we found enough
-                    if (availableBatteries.length < count) {
-                        App.showToast("Error", `Only ${availableBatteries.length} batteries are available in ${market}.`, "error");
+                    // UPDATED: Query ALL available batteries, ignore market
+                    const q = fb.query(
+                        fb.collection(fb.db, App.state.dbPaths.batteries),
+                        fb.where('status', '==', 'Available'),
+                        fb.limit(count)
+                    );
+                    const snapshot = await fb.getDocs(q);
+                    if (snapshot.docs.length < count) {
+                        App.showToast("Error", `Only ${snapshot.docs.length} batteries are available in total.`, "error");
                         return;
                     }
-
-                    // 3. Process the transaction
-                    const dateGiven = new Date().toISOString();
-                    
-                    await db.transaction('rw', db.transactions, db.batteries, async () => {
-                        const transactionPromises = [];
-                        const batteryUpdatePromises = [];
-
-                        for (const battery of availableBatteries) {
-                            // 1. Create transaction record
-                            transactionPromises.push(db.transactions.add({
-                                customerId: customerId,
-                                batteryNumber: battery.batteryNumber,
-                                market: market,
-                                dateGiven: dateGiven,
-                                dateReturned: null,
-                                status: 'Pending'
-                            }));
-
-                            // 2. Update battery status
-                            batteryUpdatePromises.push(db.batteries.update(battery.id, { status: 'Given' }));
-                        }
-                        await Promise.all(transactionPromises);
-                        await Promise.all(batteryUpdatePromises);
-                    });
-
+                    const batch = fb.writeBatch(fb.db);
+                    for (const batteryDoc of snapshot.docs) {
+                        const battery = batteryDoc.data();
+                        const transRef = fb.doc(fb.collection(fb.db, App.state.dbPaths.transactions));
+                        batch.set(transRef, {
+                            customerId: customerId,
+                            batteryNumber: battery.batteryNumber,
+                            market: market, // Transaction still has market
+                            dateGiven: fb.serverTimestamp(),
+                            dateReturned: null,
+                            status: 'Pending'
+                        });
+                        batch.update(batteryDoc.ref, { status: 'Given' });
+                    }
+                    await batch.commit();
                     App.state.currentQuickGiveModal.hide();
                     App.showToast("Success", `${count} batteries given to customer.`);
-                    App.Dashboard.refresh();
-                    
-                    // Refresh related pages if they are active
-                    if (App.state.currentPage === 'return-battery') {
-                        App.Return.load();
-                    }
-                    if (App.state.currentPage === 'batteries') {
-                        App.Batteries.loadList();
-                    }
-
                 } catch (error) {
                     console.error("Error during Quick Give:", error);
                     App.showToast("Error", "Transaction failed. Please try again.", "error");
@@ -1178,9 +1525,50 @@
         };
 
         // ----------------------------------------
-        // 5. BATTERY MODULE
+        // 5. BATTERY MODULE (Firebase)
         // ----------------------------------------
         App.Batteries = {
+            // ... existing battery module ...
+            // OLD listenForUpdates removed. Logic is now in initDataListeners
+            
+            filterList: () => {
+                const searchTerm = document.getElementById('battery-search').value.toLowerCase();
+                const statusFilter = document.getElementById('battery-status-filter').value;
+                // const marketFilter = document.getElementById('battery-market-filter').value; // Removed filter
+                const batteries = App.state.localCache.batteries;
+                const filteredBatteries = batteries.filter(b => {
+                    const inStatus = (statusFilter === 'All' || b.status === statusFilter);
+                    // const inMarket = (marketFilter === 'All' || b.market === marketFilter); // Removed check
+                    const inSearch = b.batteryNumber.toLowerCase().includes(searchTerm);
+                    return inStatus && inSearch;
+                });
+                const listEl = document.getElementById('battery-list');
+                listEl.innerHTML = '';
+                if (filteredBatteries.length === 0) {
+                    listEl.innerHTML = '<li class="list-group-item">No batteries found.</li>';
+                    return;
+                }
+                filteredBatteries.sort((a, b) => a.batteryNumber.localeCompare(b.batteryNumber, undefined, { numeric: true })).forEach(battery => {
+                    const statusClass = battery.status === 'Available' ? 'status-available' : 'status-given';
+                    const statusText = battery.status;
+                    const colorClass = battery.color || 'default';
+                    listEl.innerHTML += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div style="min-width: 0; margin-right: 1rem; flex-grow: 1;"> <!-- Grow and wrap -->
+                                <span class="batt-color-dot batt-color-${colorClass}"></span>
+                                <h6 class="mb-0 d-inline-block" style="word-wrap: break-word;">${battery.batteryNumber}</h6>
+                                <small class="text-muted d-block">${battery.market || 'Global'}</small>
+                            </div>
+                            <div style="flex-shrink: 0;" class="d-flex align-items-center"> <!-- Don't shrink -->
+                                <span class="badge rounded-pill me-3 status-${statusClass.replace('status-', '')}">${statusText}</span>
+                                <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="App.Batteries.delete('${battery.id}', '${battery.status}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                });
+            },
             showAddModal: () => {
                 const form = document.getElementById('batteryForm');
                 form.reset();
@@ -1191,268 +1579,156 @@
                 document.getElementById('battery-number-error').textContent = '';
                 App.state.currentBatteryModal.show();
             },
-
             save: async () => {
                 const form = document.getElementById('batteryForm');
                 const numberInput = document.getElementById('battery-number');
                 const numberError = document.getElementById('battery-number-error');
-                
                 if (!form.checkValidity()) return;
-
                 const batteryNumber = numberInput.value.trim();
                 const batteryColor = document.getElementById('battery-color').value;
-                const id = document.getElementById('battery-id').value;
-                const batteryMarket = document.getElementById('battery-market').value;
-
-                if (!batteryMarket) {
-                    App.showToast("Error", "Please select a market for the battery.", "error");
-                    return;
-                }
-
-                if (!id) { // Only check for duplicates on add
-                    try {
-                        const existing = await db.batteries.get({ batteryNumber: batteryNumber });
-                        if (existing) {
-                            numberInput.classList.add('is-invalid');
-                            numberError.textContent = 'This battery number already exists.';
-                            return;
-                        }
-                    } catch (e) {}
-                }
-
-                numberInput.classList.remove('is-invalid');
-                numberError.textContent = '';
-
+                
                 try {
-                    if (id) {
-                        // This app doesn't support editing battery numbers, only adding/deleting.
-                        // We'll just close the modal.
-                    } else {
-                        // Add new battery
-                        await db.batteries.add({
-                            batteryNumber: batteryNumber,
-                            status: 'Available',
-                            color: batteryColor,
-                            market: batteryMarket
-                        });
-                        App.showToast("Success", `Battery ${batteryNumber} added.`);
-                    }
-                    App.state.currentBatteryModal.hide();
-                    App.Batteries.loadList();
-                    App.Dashboard.refresh();
-                } catch (error) {
-                    console.error("Error saving battery:", error);
-                    if (error.name === 'ConstraintError') {
+                    const q = fb.query(fb.collection(fb.db, App.state.dbPaths.batteries), fb.where('batteryNumber', '==', batteryNumber));
+                    const snapshot = await fb.getDocs(q);
+                    if (!snapshot.empty) {
                         numberInput.classList.add('is-invalid');
                         numberError.textContent = 'This battery number already exists.';
-                    } else {
-                        App.showToast("Error", "Could not save battery.", "error");
+                        return;
                     }
+                    numberInput.classList.remove('is-invalid');
+                    numberError.textContent = '';
+                    await fb.addDoc(fb.collection(fb.db, App.state.dbPaths.batteries), {
+                        batteryNumber: batteryNumber,
+                        status: 'Available',
+                        color: batteryColor,
+                        market: 'Global' // Hardcoded Global
+                    });
+                    App.showToast("Success", `Battery ${batteryNumber} added.`);
+                    App.state.currentBatteryModal.hide();
+                } catch (error) {
+                    console.error("Error saving battery:", error);
+                    App.showToast("Error", "Could not save battery.", "error");
                 }
             },
-
             showRangeModal: () => {
                 document.getElementById('batteryRangeForm').reset();
                 App.state.currentBatteryRangeModal.show();
             },
-
             saveRange: async () => {
                 const prefix = document.getElementById('battery-range-prefix').value.trim();
                 const start = parseInt(document.getElementById('battery-range-start').value);
                 const end = parseInt(document.getElementById('battery-range-end').value);
                 const color = document.getElementById('battery-range-color').value;
-                const market = document.getElementById('battery-range-market').value;
-
-                if (!market) {
-                    App.showToast("Error", "Please select a market.", "error");
+                
+                if (!start || !end || start <= 0 || end <= 0 || end < start) {
+                    App.showToast("Error", "Invalid start/end numbers.", "error");
                     return;
                 }
-
-                if (!start || !end || start <= 0 || end <= 0) {
-                    App.showToast("Error", "Start and End numbers must be greater than 0.", "error");
-                    return;
-                }
-
-                if (end < start) {
-                    App.showToast("Error", "End number must be greater than or equal to Start number.", "error");
-                    return;
-                }
-
                 const totalToAdd = (end - start + 1);
-                if (totalToAdd > 500) {
-                    App.showToast("Error", "Cannot add more than 500 batteries at a time.", "error");
+                if (totalToAdd > 400) {
+                    App.showToast("Error", "Cannot add more than 400 batteries at a time.", "error");
                     return;
                 }
-
                 App.showToast("Info", `Adding ${totalToAdd} batteries. Please wait...`, "info");
                 App.state.currentBatteryRangeModal.hide();
-
                 const batteriesToAdd = [];
+                const batteryNumbers = [];
                 for (let i = start; i <= end; i++) {
+                    const batteryNumber = `${prefix}${i}`;
+                    batteryNumbers.push(batteryNumber);
                     batteriesToAdd.push({
-                        batteryNumber: `${prefix}${i}`,
+                        batteryNumber: batteryNumber,
                         status: 'Available',
                         color: color,
-                        market: market
+                        market: 'Global'
                     });
                 }
-
                 try {
-                    // allKeys: false allows bulkAdd to skip duplicates and continue
-                    await db.batteries.bulkAdd(batteriesToAdd, { allKeys: false });
-                    // Re-query to see how many were actually added (handles duplicates)
-                    const existing = await db.batteries.where('batteryNumber').anyOf(batteriesToAdd.map(b => b.batteryNumber)).count();
-                    const addedCount = batteriesToAdd.length - (existing - totalToAdd); // This logic is tricky
-                    
-                    App.showToast("Success", `Finished processing ${totalToAdd} batteries. Check list for results.`);
-
-                } catch (e) {
-                    if (e.name === 'BulkError') {
-                        const failedCount = e.failures.length;
-                        const successCount = totalToAdd - failedCount;
-                        App.showToast("Warning", `Added ${successCount} batteries. ${failedCount} failed (likely duplicates).`, "info");
-                    } else {
-                        App.showToast("Error", "An error occurred during bulk add.", "error");
-                        console.error(e);
+                    const chunks = chunkArray(batteryNumbers, 30);
+                    const existingNumbers = new Set();
+                    App.showToast("Info", `Checking ${batteryNumbers.length} batteries for duplicates...`, "info");
+                    for (const chunk of chunks) {
+                        const q = fb.query(fb.collection(fb.db, App.state.dbPaths.batteries), fb.where('batteryNumber', 'in', chunk));
+                        const snapshot = await fb.getDocs(q);
+                        snapshot.docs.forEach(doc => {
+                            existingNumbers.add(doc.data().batteryNumber);
+                        });
                     }
-                }
-
-                App.Batteries.loadList();
-                App.Dashboard.refresh();
-            },
-
-            // *** FIXED FUNCTION ***
-            loadList: async () => {
-                const searchTerm = document.getElementById('battery-search').value.toLowerCase();
-                const statusFilter = document.getElementById('battery-status-filter').value;
-                const marketFilter = document.getElementById('battery-market-filter').value;
-                
-                let query = db.batteries; // Start with the Table object
-
-                // Build a filter object
-                const filter = {};
-                if (statusFilter !== 'All') {
-                    filter.status = statusFilter;
-                }
-                if (marketFilter !== 'All') {
-                    filter.market = marketFilter;
-                }
-
-                let collection;
-                // If filter has keys, use .where()
-                if (Object.keys(filter).length > 0) {
-                    collection = query.where(filter);
-                } else {
-                    // Otherwise, get the whole collection
-                    collection = query.toCollection();
-                }
-
-                const batteries = await collection.toArray(); // This should work
-
-                const filteredBatteries = batteries.filter(b =>
-                    b.batteryNumber.toLowerCase().includes(searchTerm)
-                );
-
-                const listEl = document.getElementById('battery-list');
-                listEl.innerHTML = '';
-                if (filteredBatteries.length === 0) {
-                    listEl.innerHTML = '<li class="list-group-item">No batteries found.</li>';
-                    return;
-                }
-
-                filteredBatteries.sort((a, b) => a.batteryNumber.localeCompare(b.batteryNumber, undefined, { numeric: true })).forEach(battery => {
-                    const statusClass = battery.status === 'Available' ? 'status-available' : 'status-given';
-                    const statusText = battery.status;
-                    const colorClass = battery.color || 'default';
-                    listEl.innerHTML += `
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="batt-color-dot batt-color-${colorClass}"></span>
-                                <h6 class="mb-0 d-inline-block">${battery.batteryNumber}</h6>
-                                <small class="text-muted d-block">${battery.market || 'Unassigned'}</small>
-                            </div>
-                            <div>
-                                <span class="badge rounded-pill me-3 status-${statusClass.replace('status-', '')}">${statusText}</span>
-                                <button class="btn btn-sm btn-outline-danger" onclick="App.Batteries.delete(${battery.id})">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </li>
-                    `;
-                });
-            },
-
-            delete: async (id) => {
-                // if (confirm('Are you sure you want to delete this battery? This cannot be undone.')) { // REMOVED confirm()
-                    try {
-                        // Check if battery is 'Given'
-                        const battery = await db.batteries.get(id);
-                        if (battery && battery.status === 'Given') {
-                            App.showToast("Error", "Cannot delete a battery that is currently 'Given'.", "error");
-                            return;
+                    const validBatteriesToAdd = batteriesToAdd.filter(b => !existingNumbers.has(b.batteryNumber));
+                    const failedCount = batteriesToAdd.length - validBatteriesToAdd.length;
+                    if (validBatteriesToAdd.length > 0) {
+                        App.showToast("Info", `Adding ${validBatteriesToAdd.length} new batteries...`, "info");
+                        const addChunks = chunkArray(validBatteriesToAdd, 400);
+                        for (const addChunk of addChunks) {
+                            const batch = fb.writeBatch(fb.db);
+                            for (const battery of addChunk) {
+                                const docRef = fb.doc(fb.collection(fb.db, App.state.dbPaths.batteries));
+                                batch.set(docRef, battery);
+                            }
+                            await batch.commit();
                         }
-                        
-                        await db.batteries.delete(id);
-                        App.showToast("Success", "Battery deleted.");
-                        App.Batteries.loadList();
-                        App.Dashboard.refresh();
-                    } catch (error) {
-                        App.showToast("Error", "Could not delete battery.", "error");
                     }
-                // }
+                    if (failedCount > 0) {
+                        App.showToast("Warning", `Added ${validBatteriesToAdd.length} batteries. ${failedCount} failed (duplicates).`, "info");
+                    } else {
+                        App.showToast("Success", `Added ${validBatteriesToAdd.length} batteries.`);
+                    }
+                } catch (e) {
+                    App.showToast("Error", "An error occurred during bulk add.", "error");
+                    console.error(e);
+                }
+            },
+            delete: async (id, status) => {
+                try {
+                    if (status === 'Given') {
+                        App.showToast("Error", "Cannot delete a battery that is currently 'Given'.", "error");
+                        return;
+                    }
+                    await fb.deleteDoc(fb.doc(fb.db, App.state.dbPaths.batteries, id));
+                    App.showToast("Success", "Battery deleted.");
+                } catch (error) {
+                    App.showToast("Error", "Could not delete battery.", "error");
+                }
             }
         };
 
         // ----------------------------------------
-        // 6. GIVE BATTERY MODULE (MANUAL)
+        // 6. GIVE BATTERY MODULE (Firebase)
         // ----------------------------------------
         App.Give = {
+            // ... existing give module ...
             load: () => {
                 document.getElementById('giveBatteryForm').reset();
                 document.getElementById('give-customer-list').innerHTML = '';
                 document.getElementById('give-customer-id').value = '';
-                document.getElementById('give-available-battery-list').innerHTML = '<small class="text-muted">Select a market to see available batteries.</small>'; // *** ADDED ***
+                // Trigger load for all available batteries immediately
+                App.Give.loadAvailableBatteries();
+                
                 App.populateMarketSelects();
-                // Set market dropdown to global filter or default
                 const globalMarket = App.state.globalMarketFilter;
                 document.getElementById('give-market').value = (globalMarket !== 'All') ? globalMarket : ''; 
                 document.getElementById('give-customer-search').disabled = (globalMarket === 'All');
-                
-                // If market is pre-selected, load customers
-                if(globalMarket !== 'All') {
-                    App.Give.loadCustomersForMarket();
-                } else {
-                     document.getElementById('give-customer-list').innerHTML = '<li class="list-group-item">Select a market to see customers.</li>';
-                }
             },
-
             loadCustomersForMarket: async () => {
                 const market = document.getElementById('give-market').value;
                 const customerListEl = document.getElementById('give-customer-list');
                 const customerSearchEl = document.getElementById('give-customer-search');
-                const availableBatteryListEl = document.getElementById('give-available-battery-list'); // *** ADDED ***
                 
-                // Reset customer selection
-                customerListEl.innerHTML = '<li class="list-group-item">Loading...</li>';
-                customerSearchEl.value = '';
                 document.getElementById('give-customer-id').value = '';
-                // Reset available batteries
-                availableBatteryListEl.innerHTML = '<small class="text-muted">Loading...</small>'; // *** ADDED ***
-
+                // document.getElementById('give-battery-numbers').value = ''; // Don't clear selected batteries when changing market
+                
                 if (!market) {
                     customerListEl.innerHTML = '<li class="list-group-item">Select a market to see customers.</li>';
-                    availableBatteryListEl.innerHTML = '<small class="text-muted">Select a market to see available batteries.</small>'; // *** ADDED ***
                     customerSearchEl.disabled = true;
                     return;
                 }
-
                 customerSearchEl.disabled = false;
-
-                // --- Load Customers (existing logic) ---
-                const customers = await db.customers.where({ market: market, isActive: 1 }).toArray();
-                const pendingTransactions = await db.transactions.where({ status: 'Pending' }).toArray();
-                const pendingCustomerIds = new Set(pendingTransactions.map(t => t.customerId));
-
+                const customers = App.state.localCache.customers.filter(c => c.market === market);
+                const pendingCustomerIds = new Set(
+                    App.state.localCache.transactions
+                        .filter(t => t.status === 'Pending')
+                        .map(t => t.customerId)
+                );
                 if(customers.length === 0) {
                     customerListEl.innerHTML = '<li class="list-group-item">No customers in this market.</li>';
                 } else {
@@ -1460,7 +1736,7 @@
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map(c => {
                             const hasPending = pendingCustomerIds.has(c.id);
-                            const listClass = hasPending ? 'list-group-item-danger' : 'list-group-item-success'; // Red for pending, Green for clear
+                            const listClass = hasPending ? 'list-group-item-danger' : 'list-group-item-success'; 
                             return `
                                 <a href="#" class="list-group-item list-group-item-action ${listClass}" data-id="${c.id}" onclick="App.Give.selectCustomer(this)">
                                     <h6 class="mb-0">${c.name}</h6>
@@ -1469,23 +1745,28 @@
                             `;
                         })
                         .join('');
-                    
                     customerListEl.innerHTML = customerItems;
+                    App.Give.filterCustomers(); 
                 }
-
-                // --- *** NEW: Load Available Batteries *** ---
+            },
+            // NEW: Separated battery loading from market selection
+            loadAvailableBatteries: () => {
+                const availableBatteryListEl = document.getElementById('give-available-battery-list');
                 try {
-                    const availableBatteries = await db.batteries.where({ market: market, status: 'Available' }).toArray();
+                    // Filter ALL Available batteries (Single Inventory)
+                    const availableBatteries = App.state.localCache.batteries.filter(
+                        b => b.status === 'Available'
+                    );
                     if (availableBatteries.length === 0) {
-                        availableBatteryListEl.innerHTML = '<small class="text-muted">No available batteries in this market.</small>';
+                        availableBatteryListEl.innerHTML = '<small class="text-muted">No available batteries in inventory.</small>';
                     } else {
                         availableBatteries.sort((a, b) => a.batteryNumber.localeCompare(b.batteryNumber, undefined, { numeric: true }));
                         availableBatteryListEl.innerHTML = availableBatteries.map(battery => {
                             const colorClass = battery.color || 'default';
                             return `<button type="button" class="btn btn-sm btn-outline-success m-1" onclick="App.Give.selectAvailableBattery(this, '${battery.batteryNumber}')">
-                                        <span class="batt-color-dot batt-color-${colorClass}" style="width: 8px; height: 8px; margin-right: 4px; vertical-align: middle;"></span>
-                                        ${battery.batteryNumber}
-                                    </button>`;
+                                            <span class="batt-color-dot batt-color-${colorClass}" style="width: 8px; height: 8px; margin-right: 4px; vertical-align: middle;"></span>
+                                            ${battery.batteryNumber}
+                                        </button>`;
                         }).join('');
                     }
                 } catch (error) {
@@ -1493,25 +1774,17 @@
                     availableBatteryListEl.innerHTML = '<small class="text-danger">Error loading batteries.</small>';
                 }
             },
-
-            // *** NEW FUNCTION ***
             selectAvailableBattery: (buttonElement, batteryNumber) => {
                 const textarea = document.getElementById('give-battery-numbers');
-                
-                // Add to textarea (avoiding duplicates)
                 const currentBatteries = textarea.value.split('\n').filter(s => s.trim());
                 if (!currentBatteries.includes(batteryNumber)) {
                     textarea.value += batteryNumber + '\n';
-                    // Scroll to bottom
                     textarea.scrollTop = textarea.scrollHeight;
                 }
-
-                // Disable button
                 buttonElement.disabled = true;
                 buttonElement.classList.remove('btn-outline-success');
                 buttonElement.classList.add('btn-success');
             },
-
             filterCustomers: () => {
                 const filter = document.getElementById('give-customer-search').value.toLowerCase();
                 const list = document.getElementById('give-customer-list');
@@ -1521,112 +1794,78 @@
                     items[i].style.display = txtValue.toLowerCase().includes(filter) ? "" : "none";
                 }
             },
-
             selectCustomer: (el) => {
                 const id = el.dataset.id;
                 document.getElementById('give-customer-id').value = id;
-                
-                // Remove 'active' from all siblings
                 const list = document.getElementById('give-customer-list');
                 const items = list.getElementsByTagName('a');
                 for (let i = 0; i < items.length; i++) {
                     items[i].classList.remove('active');
                 }
-                
-                // Add 'active' to the clicked one
                 el.classList.add('active');
             },
-
             submit: async () => {
                 const form = document.getElementById('giveBatteryForm');
                 if (!form.checkValidity()) {
                     App.showToast("Error", "Please fill out all required fields.", "error");
                     return;
                 }
-
                 const market = document.getElementById('give-market').value;
-                const customerId = parseInt(document.getElementById('give-customer-id').value);
+                const customerId = document.getElementById('give-customer-id').value;
                 const batteryNumbersRaw = document.getElementById('give-battery-numbers').value;
                 const batteryNumbers = batteryNumbersRaw.split('\n').map(s => s.trim()).filter(s => s);
-
-                if (batteryNumbers.length === 0) {
-                    App.showToast("Error", "Please enter at least one battery number.", "error");
+                if (batteryNumbers.length === 0 || !customerId) {
+                    App.showToast("Error", "Please select a customer and at least one battery.", "error");
                     return;
                 }
-                
-                if (!customerId) {
-                    App.showToast("Error", "Please select a customer.", "error");
+                if (batteryNumbers.length > 30) {
+                      App.showToast("Error", "Cannot give more than 30 batteries in one manual transaction.", "error");
                     return;
                 }
-
                 try {
-                    // Check all batteries
-                    const batteries = await db.batteries.where('batteryNumber').anyOf(batteryNumbers).toArray();
-                    
+                    const q = fb.query(fb.collection(fb.db, App.state.dbPaths.batteries), fb.where('batteryNumber', 'in', batteryNumbers));
+                    const snapshot = await fb.getDocs(q);
                     const errors = [];
                     const notFound = [];
-                    const validBatteries = [];
-                    const wrongMarket = [];
-
-                    const batteryMap = new Map(batteries.map(b => [b.batteryNumber, b]));
-
+                    const validBatteryDocs = [];
+                    // const wrongMarket = []; // Removed check
+                    const batteryMap = new Map(snapshot.docs.map(doc => [doc.data().batteryNumber, doc]));
                     for (const num of batteryNumbers) {
-                        const battery = batteryMap.get(num);
-                        if (!battery) {
+                        const batteryDoc = batteryMap.get(num);
+                        if (!batteryDoc) {
                             notFound.push(num);
-                        } else if (battery.status !== 'Available') {
-                            errors.push(`${num} is already ${battery.status}.`);
-                        } else if (battery.market !== market) {
-                            // NEW CHECK: Battery must belong to the selected market
-                            wrongMarket.push(`${num} (belongs to ${battery.market})`);
                         } else {
-                            validBatteries.push(battery);
+                            const battery = batteryDoc.data();
+                            if (battery.status !== 'Available') {
+                                errors.push(`${num} is already ${battery.status}.`);
+                            } else {
+                                validBatteryDocs.push(batteryDoc);
+                            }
                         }
                     }
-
-                    if (notFound.length > 0) {
-                        App.showToast("Error", `Batteries not found: ${notFound.join(', ')}`, "error");
+                    if (notFound.length > 0 || errors.length > 0) {
+                        if(notFound.length > 0) App.showToast("Error", `Batteries not found: ${notFound.join(', ')}`, "error");
+                        if(errors.length > 0) App.showToast("Error", errors.join(' '), "error");
                         return;
                     }
-                    if (wrongMarket.length > 0) {
-                        App.showToast("Error", `Batteries from wrong market: ${wrongMarket.join(', ')}`, "error");
-                        return;
+                    const batch = fb.writeBatch(fb.db);
+                    for (const batteryDoc of validBatteryDocs) {
+                        const transRef = fb.doc(fb.collection(fb.db, App.state.dbPaths.transactions));
+                        batch.set(transRef, {
+                            customerId: customerId,
+                            batteryNumber: batteryDoc.data().batteryNumber,
+                            market: market,
+                            dateGiven: fb.serverTimestamp(),
+                            dateReturned: null,
+                            status: 'Pending'
+                        });
+                        batch.update(batteryDoc.ref, { status: 'Given' });
                     }
-                    if (errors.length > 0) {
-                        App.showToast("Error", errors.join(' '), "error");
-                        return;
-                    }
-
-                    // All good, process the transaction
-                    const dateGiven = new Date().toISOString();
-                    
-                    await db.transaction('rw', db.transactions, db.batteries, async () => {
-                        const transactionPromises = [];
-                        const batteryUpdatePromises = [];
-
-                        for (const battery of validBatteries) {
-                            // 1. Create transaction record
-                            transactionPromises.push(db.transactions.add({
-                                customerId: customerId,
-                                batteryNumber: battery.batteryNumber,
-                                market: market,
-                                dateGiven: dateGiven,
-                                dateReturned: null,
-                                status: 'Pending'
-                            }));
-
-                            // 2. Update battery status
-                            batteryUpdatePromises.push(db.batteries.update(battery.id, { status: 'Given' }));
-                        }
-                        await Promise.all(transactionPromises);
-                        await Promise.all(batteryUpdatePromises);
-                    });
-
-                    App.showToast("Success", `${validBatteries.length} batteries given to customer.`);
+                    await batch.commit();
+                    App.showToast("Success", `${validBatteryDocs.length} batteries given to customer.`);
                     form.reset();
-                    document.getElementById('give-available-battery-list').innerHTML = ''; // *** ADDED ***
-                    App.navigateTo('dashboard'); // Go to dashboard to see update
-                
+                    document.getElementById('give-available-battery-list').innerHTML = '';
+                    App.navigateTo('dashboard');
                 } catch (error) {
                     console.error("Error giving battery:", error);
                     App.showToast("Error", "An error occurred. Transaction rolled back.", "error");
@@ -1635,61 +1874,54 @@
         };
 
         // ----------------------------------------
-        // 7. RETURN BATTERY MODULE
+        // 7. RETURN BATTERY MODULE (Firebase)
         // ----------------------------------------
         App.Return = {
+            // ... existing return module ...
             state: {
                 currentCustomer: null
             },
             
-            load: async () => {
-                document.getElementById('return-customer-search').value = '';
+            // OLD listenForUpdates removed. Logic is now in initDataListeners
+
+            renderList: () => {
                 const listEl = document.getElementById('return-pending-list');
+                const allCustomers = App.state.localCache.customers;
                 try {
-                    // Find all unique customer IDs from pending transactions
-                    const pendingTransactions = await db.transactions.where({ status: 'Pending' }).toArray();
+                    const pendingTransactions = App.state.localCache.transactions.filter(t => t.status === 'Pending');
                     const customerIds = [...new Set(pendingTransactions.map(t => t.customerId))];
-                    
                     if (customerIds.length === 0) {
                         listEl.innerHTML = '<div class="alert alert-success">No customers with pending returns.</div>';
                         return;
                     }
-
-                    // Get customer details
-                    const customers = await db.customers.where('id').anyOf(customerIds).toArray();
-                    const customerMap = new Map(customers.map(c => [c.id, c]));
-
-                    // Group by customer
+                    const customerMap = new Map(allCustomers.map(c => [c.id, c]));
                     const grouped = pendingTransactions.reduce((acc, t) => {
                         acc[t.customerId] = (acc[t.customerId] || 0) + 1;
                         return acc;
                     }, {});
-
                     let html = '';
                     for (const id of customerIds) {
                         const customer = customerMap.get(id);
-                        if (customer && customer.isActive) { // Only show active customers
+                        if (customer && customer.isActive) {
                             const count = grouped[id];
                             html += `
                                 <a href="#" class="list-group-item list-group-item-action" data-customer-id="${id}" data-customer-name="${customer.name}" data-customer-phone="${customer.mobile}" onclick="App.Return.showReturnModal(this.dataset)">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">${customer.name}</h5>
-                                        <span class="badge bg-danger rounded-pill">${count}</span>
+                                        <h5 class="mb-1" style="word-wrap: break-word;">${customer.name}</h5>
+                                        <span class="badge bg-danger rounded-pill" style="flex-shrink: 0;">${count}</span>
                                     </div>
-                                    <p class="mb-1">${customer.address || 'No Address'}</p>
+                                    <p class="mb-1" style="word-wrap: break-word;">${customer.address || 'No Address'}</p>
                                     <small>${customer.mobile || 'No Phone'} | ${customer.market}</small>
                                 </a>
                             `;
                         }
                     }
                     listEl.innerHTML = html || '<div class="alert alert-success">No active customers with pending returns.</div>';
-
+                    App.Return.filterCustomers();
                 } catch (error) {
                     console.error("Error loading pending returns:", error);
-                    App.showToast("Error", "Could not load pending returns.", "error");
                 }
             },
-
             filterCustomers: () => {
                 const filter = document.getElementById('return-customer-search').value.toLowerCase();
                 const list = document.getElementById('return-pending-list');
@@ -1699,147 +1931,225 @@
                     items[i].style.display = txtValue.toLowerCase().includes(filter) ? "" : "none";
                 }
             },
-
-            showReturnModal: async (customerData) => {
+            showReturnModal: (customerData) => {
                 App.Return.state.currentCustomer = customerData;
-                const customerId = parseInt(customerData.customerId);
+                const customerId = customerData.customerId;
                 document.getElementById('returnModalTitle').textContent = `Return for ${customerData.customerName}`;
                 document.getElementById('return-notify-footer').style.display = 'none';
-
                 const listEl = document.getElementById('return-battery-list');
                 listEl.innerHTML = '<li class="list-group-item">Loading...</li>';
                 App.state.currentReturnModal.show();
-
-                const transactions = await db.transactions
-                    .where({ customerId: customerId, status: 'Pending' })
-                    .toArray();
-                
+                const transactions = App.state.localCache.transactions.filter(
+                    t => t.customerId === customerId && t.status === 'Pending'
+                );
                 if (transactions.length === 0) {
                     listEl.innerHTML = '<li class="list-group-item text-success">All batteries returned!</li>';
                     App.state.currentReturnModal.hide();
-                    App.Return.load(); // Refresh the main list
                     return;
                 }
-
-                listEl.innerHTML = transactions.map(t => `
-                    <li class="list-group-item list-group-item-action list-group-item-danger" id="return-tx-${t.id}" onclick="App.Return.markAsReturned(${t.id}, '${t.batteryNumber}')">
-                        <i class="bi bi-battery me-2"></i>
-                        <strong>${t.batteryNumber}</strong>
-                        <small class="text-muted d-block">Given: ${new Date(t.dateGiven).toLocaleString()}</small>
-                    </li>
-                `).join('');
+                listEl.innerHTML = transactions.map(t => {
+                    const dateGiven = t.dateGiven?.toDate ? t.dateGiven.toDate().toLocaleString() : 'N/A';
+                    return `
+                        <li class="list-group-item list-group-item-action list-group-item-danger" id="return-tx-${t.id}" onclick="App.Return.markAsReturned('${t.id}', '${t.batteryNumber}')">
+                            <i class="bi bi-battery me-2"></i>
+                            <strong>${t.batteryNumber}</strong>
+                            <small class="text-muted d-block">Given: ${dateGiven}</small>
+                        </li>
+                    `
+                }).join('');
             },
-
             markAsReturned: async (transactionId, batteryNumber) => {
-                // if (!confirm(`Mark battery ${batteryNumber} as returned?`)) return; // REMOVED confirm()
-
                 try {
-                    const dateReturned = new Date().toISOString();
-
-                    await db.transaction('rw', db.transactions, db.batteries, async () => {
-                        // 1. Update transaction
-                        await db.transactions.update(transactionId, {
-                            status: 'Returned',
-                            dateReturned: dateReturned
-                        });
-
-                        // 2. Update battery
-                        await db.batteries.where({ batteryNumber: batteryNumber }).modify({
-                            status: 'Available'
-                        });
+                    const batch = fb.writeBatch(fb.db);
+                    const transRef = fb.doc(fb.db, App.state.dbPaths.transactions, transactionId);
+                    batch.update(transRef, {
+                        status: 'Returned',
+                        dateReturned: fb.serverTimestamp()
                     });
-
+                    const q = fb.query(fb.collection(fb.db, App.state.dbPaths.batteries), fb.where('batteryNumber', '==', batteryNumber), fb.limit(1));
+                    const snapshot = await fb.getDocs(q);
+                    if (snapshot.empty) {
+                        throw new Error(`Battery ${batteryNumber} not found!`);
+                    }
+                    const batteryDoc = snapshot.docs[0];
+                    batch.update(batteryDoc.ref, { status: 'Available' });
+                    await batch.commit();
                     App.showToast("Success", `Battery ${batteryNumber} marked as returned.`);
-                    
-                    // Show notification footer
                     const customer = App.Return.state.currentCustomer;
-                    if (customer.customerPhone) { // Only show if phone exists
+                    if (customer.customerPhone) {
                         const waLink = document.getElementById('return-whatsapp-link');
                         const message = encodeURIComponent(`Thank you for returning your battery (${batteryNumber}).`);
-                        waLink.href = `https://wa.me/91${customer.customerPhone}?text=${message}`; // Assumes 91 country code
+                        waLink.href = `https://wa.me/91${customer.customerPhone}?text=${message}`;
                         document.getElementById('return-notify-footer').style.display = 'block';
                     }
-
-                    // Remove item from modal list
                     const itemEl = document.getElementById(`return-tx-${transactionId}`);
                     if (itemEl) itemEl.remove();
-
-                    // Check if list is empty
                     const listEl = document.getElementById('return-battery-list');
                     if (listEl.children.length === 0) {
                         App.state.currentReturnModal.hide();
-                        App.Return.load(); // Refresh main list
-                        App.Dashboard.refresh();
                     }
-
                 } catch (error) {
                     console.error("Error marking as returned:", error);
-                    App.showToast("Error", "Could not mark battery as returned.", "error");
+                    App.showToast("Error", `Could not mark battery as returned: ${error.message}`, "error");
                 }
             }
         };
 
         // ----------------------------------------
-        // 8. REPORTS MODULE
+        // NEW MASTER LISTENER FUNCTION
+        // ----------------------------------------
+        App.initDataListeners = () => {
+            console.log(`Initializing listeners for market: ${App.state.globalMarketFilter}`);
+            const market = App.state.globalMarketFilter;
+
+            // --- Unsubscribe from any old listeners ---
+            if (App.state.listeners.customers) App.state.listeners.customers();
+            if (App.state.listeners.batteries) App.state.listeners.batteries();
+            if (App.state.listeners.transactions) App.state.listeners.transactions();
+
+            // --- Base Queries ---
+            let customerQuery = fb.query(fb.collection(fb.db, App.state.dbPaths.customers), fb.where('isActive', '==', 1));
+            // Updated: Battery query is always GLOBAL now
+            let batteryQuery = fb.query(fb.collection(fb.db, App.state.dbPaths.batteries));
+            let transactionQuery = fb.query(fb.collection(fb.db, App.state.dbPaths.transactions));
+
+            if (market !== 'All') {
+                // --- LIVE MODE: Specific market selected. Use REAL-TIME listeners ---
+                console.log("Using real-time listeners (onSnapshot) for market:", market);
+                customerQuery = fb.query(customerQuery, fb.where('market', '==', market));
+                // batteryQuery = fb.query(batteryQuery, fb.where('market', '==', market)); // Removed market filter for batteries
+                transactionQuery = fb.query(transactionQuery, fb.where('market', '==', market));
+                
+                // Customer Listener
+                App.state.listeners.customers = fb.onSnapshot(customerQuery, (snapshot) => {
+                    console.log(`Firestore: Customers updated (Market: ${market}) - ${snapshot.size} docs`);
+                    App.state.localCache.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    App.renderCurrentPage();
+                }, (error) => { 
+                    console.error("Error listening to customers:", error);
+                    App.showToast("Error", "Could not load customers.", "error");
+                });
+
+                // Battery Listener (Global)
+                App.state.listeners.batteries = fb.onSnapshot(batteryQuery, (snapshot) => {
+                    console.log(`Firestore: Batteries updated (Global) - ${snapshot.size} docs`);
+                    App.state.localCache.batteries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    App.renderCurrentPage();
+                }, (error) => { 
+                    console.error("Error listening to batteries:", error);
+                    App.showToast("Error", "Could not load batteries.", "error");
+                });
+
+                // Transaction Listener
+                App.state.listeners.transactions = fb.onSnapshot(transactionQuery, (snapshot) => {
+                    console.log(`Firestore: Transactions updated (Market: ${market}) - ${snapshot.size} docs`);
+                    App.state.localCache.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    App.renderCurrentPage();
+                }, (error) => { 
+                    console.error("Error listening to transactions:", error);
+                    App.showToast("Error", "Could not load transactions.", "error");
+                });
+
+            } else {
+                // --- MANUAL MODE: "All Markets" selected. Use ONE-TIME fetch (getDocs) ---
+                console.log("Using one-time fetch (getDocs) for 'All Markets'");
+
+                // --- NEW CACHE LOGIC ---
+                const cachedCustomers = App.getCache('customers-all');
+                const cachedBatteries = App.getCache('batteries-all');
+                const cachedTransactions = App.getCache('transactions-all');
+
+                if (cachedCustomers && cachedBatteries && cachedTransactions) {
+                    console.log("Loading 'All Markets' from CACHE");
+                    App.showToast("Info", "Loaded data from cache (fast).", "info");
+                    
+                    App.state.localCache.customers = cachedCustomers;
+                    App.state.localCache.batteries = cachedBatteries;
+                    App.state.localCache.transactions = cachedTransactions;
+                    
+                    App.renderCurrentPage();
+                    return; // Stop here, we don't need to fetch
+                }
+                // --- END NEW CACHE LOGIC ---
+
+
+                App.showToast("Info", "Loading all market data from Firebase... (slower)", "info");
+                
+                // We use Promise.all to fetch all data at once
+                Promise.all([
+                    fb.getDocs(customerQuery),
+                    fb.getDocs(batteryQuery),
+                    fb.getDocs(transactionQuery)
+                ]).then(([customerSnapshot, batterySnapshot, transactionSnapshot]) => {
+                    console.log(`Firestore: Fetched ${customerSnapshot.size} customers, ${batterySnapshot.size} batteries, ${transactionSnapshot.size} transactions.`);
+                    
+                    App.state.localCache.customers = customerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    App.state.localCache.batteries = batterySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    App.state.localCache.transactions = transactionSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // --- NEW: Save to cache ---
+                    App.setCache('customers-all', App.state.localCache.customers);
+                    App.setCache('batteries-all', App.state.localCache.batteries);
+                    App.setCache('transactions-all', App.state.localCache.transactions);
+
+                    App.renderCurrentPage();
+                    App.showToast("Success", "Loaded and cached all market data.", "success");
+                    
+                }).catch(error => {
+                    console.error("Error fetching 'All Markets' data:", error);
+                    App.showToast("Error", "Failed to load all market data.", "error");
+                });
+            }
+        };
+
+        // ----------------------------------------
+        // 8. REPORTS MODULE (Firebase)
         // ----------------------------------------
         App.Reports = {
+            // ... existing reports module ...
             state: {
                 reportData: []
             },
-            
             load: () => {
-                document.getElementById('report-date-start').valueAsDate = new Date(new Date().setDate(new Date().getDate() - 7)); // Default 7 days ago
+                document.getElementById('report-date-start').valueAsDate = new Date(new Date().setDate(new Date().getDate() - 7));
                 document.getElementById('report-date-end').valueAsDate = new Date();
                 document.getElementById('report-results').innerHTML = '<tr><td colspan="6">Generate a report to see results.</td></tr>';
                 document.getElementById('report-summary').innerHTML = '';
             },
-
             generate: async () => {
                 const market = document.getElementById('report-market').value;
                 const startDate = new Date(document.getElementById('report-date-start').value);
                 const endDate = new Date(document.getElementById('report-date-end').value);
-
-                // Set time to start of day and end of day
                 startDate.setHours(0, 0, 0, 0);
                 endDate.setHours(23, 59, 59, 999);
-                
-                let query = db.transactions
-                    .where('dateGiven').between(startDate.toISOString(), endDate.toISOString());
-                    
+                let queries = [
+                    fb.where('dateGiven', '>=', startDate),
+                    fb.where('dateGiven', '<=', endDate)
+                ];
                 if (market !== 'All') {
-                    query = query.and(t => t.market === market);
+                    queries.push(fb.where('market', '==', market));
                 }
-
-                const transactions = await query.toArray();
-                
+                const q = fb.query(fb.collection(fb.db, App.state.dbPaths.transactions), ...queries);
+                const snapshot = await fb.getDocs(q);
+                const transactions = snapshot.docs.map(doc => doc.data());
                 if (transactions.length === 0) {
                     document.getElementById('report-results').innerHTML = '<tr><td colspan="6">No data found for this period.</td></tr>';
                     document.getElementById('report-summary').innerHTML = '';
                     App.Reports.state.reportData = [];
                     return;
                 }
-
-                // Get all customer IDs from report
-                const customerIds = [...new Set(transactions.map(t => t.customerId))];
-                const customers = await db.customers.where('id').anyOf(customerIds).toArray();
-                const customerMap = new Map(customers.map(c => [c.id, c.name]));
-
-                // For export
+                const customerMap = new Map(App.state.localCache.customers.map(c => [c.id, c.name]));
                 const exportData = [];
-
                 let given = 0;
                 let returned = 0;
                 let pending = 0;
-
                 const tableHtml = transactions.map(t => {
                     const customerName = customerMap.get(t.customerId) || 'Unknown';
-                    const dateGiven = new Date(t.dateGiven).toLocaleString();
-                    const dateReturned = t.dateReturned ? new Date(t.dateReturned).toLocaleString() : 'N/A';
-                    
+                    const dateGiven = t.dateGiven.toDate().toLocaleString();
+                    const dateReturned = t.dateReturned ? t.dateReturned.toDate().toLocaleString() : 'N/A';
                     if (t.status === 'Pending') pending++;
                     if (t.status === 'Returned') returned++;
-                    given++; // Total transactions in period
-
+                    given++;
                     exportData.push({
                         "Date Given": dateGiven,
                         "Market": t.market,
@@ -1848,44 +2158,37 @@
                         "Status": t.status,
                         "Date Returned": dateReturned
                     });
-
                     return `
                         <tr>
-                            <td>${dateGiven}</td>
-                            <td>${t.market}</td>
-                            <td>${customerName}</td>
-                            <td>${t.batteryNumber}</td>
+                            <td style="word-break: break-all;">${dateGiven}</td>
+                            <td style="word-break: break-all;">${t.market}</td>
+                            <td style="word-break: break-all;">${customerName}</td>
+                            <td style="word-break: break-all;">${t.batteryNumber}</td>
                             <td><span class="badge status-${t.status.toLowerCase()}">${t.status}</span></td>
-                            <td>${dateReturned}</td>
+                            <td style="word-break: break-all;">${dateReturned}</td>
                         </tr>
                     `;
                 }).join('');
-
                 App.Reports.state.reportData = exportData;
                 document.getElementById('report-results').innerHTML = tableHtml;
-
-                // Update summary
                 document.getElementById('report-summary').innerHTML = `
                     <span class="badge fs-6 text-bg-primary me-2">Total Given: ${given}</span>
                     <span class="badge fs-6 text-bg-success me-2">Total Returned: ${returned}</span>
                     <span class="badge fs-6 text-bg-danger">Total Pending: ${pending}</span>
                 `;
             },
-
             export: (type) => {
                 const data = App.Reports.state.reportData;
                 if (data.length === 0) {
                     App.showToast("Info", "No data to export. Please generate a report first.", "info");
                     return;
                 }
-
                 const filename = `Battery_Report_${new Date().toISOString().split('T')[0]}`;
                 const ws = XLSX.utils.json_to_sheet(data);
-
                 if (type === 'csv') {
                     const csv = XLSX.utils.sheet_to_csv(ws);
                     App.Settings.downloadFile(csv, `${filename}.csv`, 'text/csv');
-                } else { // xlsx
+                } else {
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Report");
                     XLSX.writeFile(wb, `${filename}.xlsx`);
@@ -1894,29 +2197,37 @@
         };
 
         // ----------------------------------------
-        // 9. SETTINGS MODULE
+        // 9. SETTINGS MODULE (Firebase)
         // ----------------------------------------
         App.Settings = {
-            load: async () => {
-                try {
-                    const marketsSetting = await db.settings.get('markets');
-                    if (marketsSetting) {
-                        App.state.markets = marketsSetting.value;
-                        document.getElementById('settings-market-list').value = marketsSetting.value.join(', ');
+            loadAndListen: () => {
+                // ... existing settings load ...
+                const docRef = fb.doc(fb.db, App.state.dbPaths.settings, 'appSettings');
+                if (App.state.listeners.settings) App.state.listeners.settings(); 
+                App.state.listeners.settings = fb.onSnapshot(docRef, (doc) => {
+                    let markets = ['Sunday', 'Wednesday', 'Friday', 'Unassigned']; 
+                    if (doc.exists()) {
+                        console.log("Firestore: Settings updated");
+                        markets = doc.data().value || markets;
+                    } else {
+                        console.log("No settings doc, creating one with defaults.");
+                        App.Settings.saveMarkets(markets.join(', '));
                     }
+                    App.state.markets = markets;
+                    document.getElementById('settings-market-list').value = markets.join(', ');
                     App.populateMarketSelects();
-                    App.loadTheme();
-                } catch (error) {
+                }, (error) => {
                     console.error("Error loading settings:", error);
-                }
+                });
             },
 
-            saveMarkets: async () => {
-                const marketString = document.getElementById('settings-market-list').value;
-                const markets = marketString.split(',').map(m => m.trim()).filter(m => m);
-                
+            saveMarkets: async (marketsString = null) => {
+                // ... existing save markets ...
+                marketsString = marketsString || document.getElementById('settings-market-list').value;
+                const markets = marketsString.split(',').map(m => m.trim()).filter(m => m);
                 try {
-                    await db.settings.put({ key: 'markets', value: markets });
+                    const docRef = fb.doc(fb.db, App.state.dbPaths.settings, 'appSettings');
+                    await fb.setDoc(docRef, { value: markets });
                     App.state.markets = markets;
                     App.populateMarketSelects();
                     App.showToast("Success", "Market list updated.");
@@ -1925,24 +2236,233 @@
                 }
             },
 
-            backupData: async () => {
+            // *** NEW: handleCustomerImport ***
+            handleCustomerImport: (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = e.target.result;
+                        const workbook = XLSX.read(data, { type: 'binary' });
+                        const sheetName = workbook.SheetNames[0];
+                        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                        if (jsonData.length === 0) {
+                            App.showToast("Error", "File is empty or not formatted correctly.", "error");
+                            return;
+                        }
+                        
+                        if (jsonData.length > 400) {
+                            App.showToast("Error", "Cannot import more than 400 customers at a time.", "error");
+                            return;
+                        }
+
+                        // 1. Validate headers
+                        const headers = Object.keys(jsonData[0]);
+                        if (!headers.includes('name') || !headers.includes('market')) {
+                            App.showToast("Error", "File must have 'name' and 'market' columns.", "error");
+                            return;
+                        }
+
+                        App.showToast("Info", `Validating ${jsonData.length} customers...`, "info");
+
+                        // 2. Validate data and check for duplicates
+                        const batch = fb.writeBatch(fb.db);
+                        let addedCount = 0;
+                        let failedCount = 0;
+                        
+                        // Use composite keys: market + serial for uniqueness
+                        const existingMap = new Set();
+                        App.state.localCache.customers.forEach(c => {
+                            if(c.serialNumber) existingMap.add(`${c.market}-${c.serialNumber}`);
+                        });
+
+                        for (const row of jsonData) {
+                            const name = row.name ? String(row.name).trim() : '';
+                            const market = row.market ? String(row.market).trim() : '';
+                            const serial = row.serialNumber ? String(row.serialNumber).trim() : '';
+                            
+                            // Basic validation
+                            if (!name || !market) {
+                                failedCount++;
+                                continue;
+                            }
+                            
+                            // Check if market exists
+                            if (!App.state.markets.includes(market)) {
+                                App.showToast("Error", `Market "${market}" for customer "${name}" does not exist in Settings. Import stopped.`, "error");
+                                return;
+                            }
+
+                            // Check for duplicate serial (Market-Specific)
+                            if (serial) {
+                                const key = `${market}-${serial}`;
+                                if (existingMap.has(key)) {
+                                    console.warn(`Skipping duplicate serial in ${market}: ${serial}`);
+                                    failedCount++;
+                                    continue; // Skip duplicate
+                                }
+                                existingMap.add(key); // Add to set for this batch
+                            }
+
+                            // All good, add to batch
+                            const newCustomer = {
+                                name: name,
+                                market: market,
+                                mobile: row.mobile ? String(row.mobile).trim() : '',
+                                address: row.address ? String(row.address).trim() : '',
+                                serialNumber: serial,
+                                isActive: 1
+                            };
+                            
+                            const docRef = fb.doc(fb.collection(fb.db, App.state.dbPaths.customers));
+                            batch.set(docRef, newCustomer);
+                            addedCount++;
+                        }
+
+                        // 3. Commit batch
+                        if (addedCount > 0) {
+                            await batch.commit();
+                            App.showToast("Success", `Successfully imported ${addedCount} customers.`);
+                        }
+                        if (failedCount > 0) {
+                            App.showToast("Warning", `${failedCount} customers failed to import (duplicates or invalid data).`, "info");
+                        }
+                        if (addedCount === 0 && failedCount === 0) {
+                            App.showToast("Info", "No new customers to import.", "info");
+                        }
+
+                    } catch (error) {
+                        console.error("Import failed:", error);
+                        App.showToast("Error", "File import failed. Check file format & data.", "error");
+                    } finally {
+                        event.target.value = null; // Reset file input
+                    }
+                };
+                reader.readAsBinaryString(file);
+            },
+
+            // *** NEW: Export Customers ***
+            exportCustomers: () => {
+                const customers = App.state.localCache.customers;
+                if (!customers || customers.length === 0) {
+                    App.showToast("Info", "No customers to export.", "info");
+                    return;
+                }
+                
+                const exportData = customers.map(c => ({
+                    market: c.market,
+                    name: c.name,
+                    serialNumber: c.serialNumber,
+                    mobile: c.mobile,
+                    address: c.address
+                }));
+
+                // Sort by Market then Name
+                exportData.sort((a, b) => {
+                    if (a.market < b.market) return -1;
+                    if (a.market > b.market) return 1;
+                    return a.name.localeCompare(b.name);
+                });
+
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Customers");
+                const filename = `Customers_List_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, filename);
+                App.showToast("Success", "Customer list downloaded.");
+            },
+
+            // *** NEW: Export All Data (Full Backup) ***
+            exportAllData: async () => {
+                App.showToast("Info", "Preparing full database export...", "info");
+                
                 try {
-                    const backup = {
-                        customers: await db.customers.toArray(),
-                        batteries: await db.batteries.toArray(),
-                        transactions: await db.transactions.toArray(),
-                        settings: await db.settings.toArray(),
-                    };
-                    const json = JSON.stringify(backup, null, 2);
-                    const filename = `battery-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
-                    App.Settings.downloadFile(json, filename, 'application/json');
+                    // Fetch all collections directly to ensure we have everything regardless of current view
+                    const [custSnap, battSnap, transSnap] = await Promise.all([
+                        fb.getDocs(fb.collection(fb.db, App.state.dbPaths.customers)),
+                        fb.getDocs(fb.collection(fb.db, App.state.dbPaths.batteries)),
+                        fb.getDocs(fb.collection(fb.db, App.state.dbPaths.transactions))
+                    ]);
+
+                    const customers = custSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const batteries = battSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const transactions = transSnap.docs.map(doc => {
+                        const d = doc.data();
+                        return {
+                            id: doc.id,
+                            ...d,
+                            dateGiven: d.dateGiven?.toDate ? d.dateGiven.toDate().toLocaleString() : d.dateGiven,
+                            dateReturned: d.dateReturned?.toDate ? d.dateReturned.toDate().toLocaleString() : d.dateReturned
+                        };
+                    });
+
+                    const wb = XLSX.utils.book_new();
+
+                    // 1. Customers Sheet
+                    if (customers.length) {
+                        const custData = customers.map(c => ({
+                            Name: c.name,
+                            Market: c.market,
+                            'Serial No': c.serialNumber,
+                            Mobile: c.mobile,
+                            Address: c.address,
+                            Active: c.isActive ? 'Yes' : 'No'
+                        }));
+                        // Sort
+                        custData.sort((a, b) => (a.Market || '').localeCompare(b.Market || '') || (a.Name || '').localeCompare(b.Name || ''));
+                        const wsCust = XLSX.utils.json_to_sheet(custData);
+                        XLSX.utils.book_append_sheet(wb, wsCust, "Customers");
+                    }
+
+                    // 2. Batteries Sheet
+                    if (batteries.length) {
+                        const battData = batteries.map(b => ({
+                            'Battery No': b.batteryNumber,
+                            Status: b.status,
+                            Color: b.color,
+                            Market: b.market // Usually 'Global' now, but keeping for history
+                        }));
+                        // Sort by Battery Number
+                        battData.sort((a, b) => a['Battery No'].localeCompare(b['Battery No'], undefined, { numeric: true }));
+                        const wsBatt = XLSX.utils.json_to_sheet(battData);
+                        XLSX.utils.book_append_sheet(wb, wsBatt, "Batteries");
+                    }
+
+                    // 3. Transactions Sheet
+                    if (transactions.length) {
+                        // Create map for quick customer name lookup
+                        const custMap = new Map(customers.map(c => [c.id, c.name]));
+                        
+                        const transData = transactions.map(t => ({
+                            'Battery No': t.batteryNumber,
+                            Customer: custMap.get(t.customerId) || 'Unknown/Deleted',
+                            Market: t.market,
+                            Status: t.status,
+                            'Date Given': t.dateGiven,
+                            'Date Returned': t.dateReturned
+                        }));
+                        
+                        // Sort by Date Given (descending approx by string logic or id if needed, usually latest first is better)
+                        // For simplicity, let's just leave as is or sort by date string
+                        const wsTrans = XLSX.utils.json_to_sheet(transData);
+                        XLSX.utils.book_append_sheet(wb, wsTrans, "Transactions");
+                    }
+
+                    const filename = `Full_Backup_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    XLSX.writeFile(wb, filename);
+                    App.showToast("Success", "Full database export complete.");
+
                 } catch (error) {
-                    console.error("Backup failed:", error);
-                    App.showToast("Error", "Backup failed.", "error");
+                    console.error("Export all failed:", error);
+                    App.showToast("Error", "Failed to export data. Check console.", "error");
                 }
             },
 
             downloadFile: (content, fileName, contentType) => {
+                // ... existing download helper ...
                 const a = document.createElement("a");
                 const file = new Blob([content], { type: contentType });
                 a.href = URL.createObjectURL(file);
@@ -1951,100 +2471,71 @@
                 URL.revokeObjectURL(a.href);
             },
 
-            restoreData: async (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                // if (!confirm("WARNING: This will delete all current data and replace it with the backup. Are you sure?")) { // REMOVED confirm()
-                //     event.target.value = null; // Reset file input
-                //     return;
-                // }
-
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const json = e.target.result;
-                        const data = JSON.parse(json);
-
-                        if (!data.customers || !data.batteries || !data.transactions || !data.settings) {
-                            throw new Error("Invalid backup file structure.");
-                        }
-
-                        // Perform restore in a transaction
-                        await db.transaction('rw', db.customers, db.batteries, db.transactions, db.settings, async () => {
-                            // Clear all data
-                            await Promise.all([
-                                db.customers.clear(),
-                                db.batteries.clear(),
-                                db.transactions.clear(),
-                                db.settings.clear()
-                            ]);
-
-                            // Bulk add new data
-                            await Promise.all([
-                                db.customers.bulkAdd(data.customers),
-                                db.batteries.bulkAdd(data.batteries),
-                                db.transactions.bulkAdd(data.transactions),
-                                db.settings.bulkAdd(data.settings)
-                            ]);
-                        });
-
-                        App.showToast("Success", "Data restored successfully. App will now reload.");
-                        // Reload settings and refresh UI
-                        await App.Settings.load();
-                        App.Dashboard.refresh();
-                        App.navigateTo('dashboard');
-                        setTimeout(() => window.location.reload(), 1500); // Reload to ensure clean state
-                    
-                    } catch (error) {
-                        console.error("Restore failed:", error);
-                        App.showToast("Error", `Restore failed: ${error.message}`, "error");
-                    } finally {
-                        event.target.value = null; // Reset file input
-                    }
-                };
-                reader.readAsText(file);
+            showResetModal: () => {
+                // ... existing reset modal show ...
+                document.getElementById('reset-confirm-text').value = '';
+                App.state.currentResetModal.show();
             },
 
-            resetDailyData: async () => {
-                // if (!confirm("Are you sure? This will clear all transactions and mark all batteries as 'Available'. This cannot be undone.")) { // REMOVED confirm()
-                //     return;
-                // }
+            confirmResetDailyData: async () => {
+                // ... existing reset confirm ...
+                const confirmText = document.getElementById('reset-confirm-text').value;
+                if (confirmText !== "RESET") {
+                    App.showToast("Error", "Confirmation text does not match.", "error");
+                    return;
+                }
+                App.showToast("Info", "Resetting data... Please wait.", "info");
+                App.state.currentResetModal.hide();
                 try {
-                    await db.transaction('rw', db.transactions, db.batteries, async () => {
-                        // 1. Clear all transactions
-                        await db.transactions.clear();
-                        
-                        // 2. Mark all batteries as 'Available'
-                        await db.batteries.toCollection().modify({ status: 'Available' });
-                    });
+                    const batch = fb.writeBatch(fb.db);
+                    const transSnapshot = await fb.getDocs(fb.collection(fb.db, App.state.dbPaths.transactions));
+                    transSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    const battSnapshot = await fb.getDocs(fb.query(fb.collection(fb.db, App.state.dbPaths.batteries), fb.where('status', '==', 'Given')));
+                    battSnapshot.docs.forEach(doc => batch.update(doc.ref, { status: 'Available' }));
+                    await batch.commit();
                     App.showToast("Success", "Daily data has been reset.");
-                    App.Dashboard.refresh();
-                    App.navigateTo('dashboard');
-                } catch (error) { // <-- SYNTAX ERROR FIX
+                } catch (error) { 
                     console.error("Reset failed:", error);
                     App.showToast("Error", "Could not reset data.", "error");
                 }
             },
 
-            clearBatteries: async () => {
-                // const verification = prompt("This will delete ALL batteries and transactions. This cannot be undone. Type DELETE to confirm.");
-                // if (verification !== "DELETE") { // REMOVED prompt()
-                //     App.showToast("Info", "Action cancelled.", "info");
-                //     return;
-                // }
+            showClearAllModal: () => {
+                // ... existing clear all modal show ...
+                document.getElementById('clear-all-confirm-text').value = '';
+                App.state.currentClearAllModal.show();
+            },
 
+            confirmClearAllData: async () => {
+                // ... existing clear all confirm ...
+                const confirmText = document.getElementById('clear-all-confirm-text').value;
+                if (confirmText !== "DELETE ALL") {
+                    App.showToast("Error", "Confirmation text does not match.", "error");
+                    return;
+                }
+                App.showToast("Info", "DELETING ALL DATA... Please wait.", "info");
+                App.state.currentClearAllModal.hide();
+                const deleteCollection = async (collectionPath) => {
+                    let snapshot;
+                    do {
+                        const q = fb.query(fb.collection(fb.db, collectionPath), fb.limit(400));
+                        snapshot = await fb.getDocs(q);
+                        if (snapshot.size === 0) break; 
+                        const batch = fb.writeBatch(fb.db);
+                        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                        await batch.commit();
+                        console.log(`Deleted ${snapshot.size} documents...`);
+                    } while (snapshot.size > 0);
+                };
                 try {
-                    await db.transaction('rw', db.transactions, db.batteries, async () => {
-                        await db.transactions.clear();
-                        await db.batteries.clear();
-                    });
+                    console.log("Deleting transactions...");
+                    await deleteCollection(App.state.dbPaths.transactions);
+                    console.log("Deleting batteries...");
+                    await deleteCollection(App.state.dbPaths.batteries);
                     App.showToast("Success", "All batteries and transactions have been deleted.");
-                    App.Dashboard.refresh();
-                    App.Batteries.loadList();
                 } catch (error) {
-                    console.error("Clear batteries failed:", error);
-                    App.showToast("Error", "Could not clear batteries.", "error");
+                    console.error("Clear all data failed:", error);
+                    App.showToast("Error", "Could not clear all data.", "error");
                 }
             }
         };
@@ -2052,6 +2543,7 @@
         // ----------------------------------------
         // 10. APP INITIALIZATION
         // ----------------------------------------
+        window.App = App; // Make App global for inline onclick handlers
         App.init();
 
     </script>
